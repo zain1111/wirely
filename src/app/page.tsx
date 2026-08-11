@@ -1,21 +1,20 @@
 import { Faq } from "@/components/home/Faq";
 import { FinalCta } from "@/components/home/FinalCta";
-import { Hero } from "@/components/home/Hero";
+import { HeroSlider } from "@/components/home/HeroSlider";
 import { OfferBand } from "@/components/home/OfferBand";
-import { ProductGrid } from "@/components/home/ProductGrid";
+import { ProductShowcase } from "@/components/home/ProductShowcase";
 import { Reviews } from "@/components/home/Reviews";
 import { SocialProof } from "@/components/home/SocialProof";
 import { WhyUs } from "@/components/home/WhyUs";
-import { getProducts } from "@/lib/products";
 
-export default async function HomePage() {
-  const products = await getProducts();
+export const revalidate = 300;
 
+export default function HomePage() {
   return (
     <>
-      <Hero />
+      <HeroSlider />
       <SocialProof />
-      <ProductGrid products={products} />
+      <ProductShowcase />
       <WhyUs />
       <OfferBand />
       <Reviews />

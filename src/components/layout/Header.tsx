@@ -8,7 +8,7 @@ import { useCart } from "@/store/cart";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/#shop", label: "Shop" },
+  { href: "/shop", label: "Shop" },
   { href: "/#why-us", label: "Why Us" },
   { href: "/#reviews", label: "Reviews" },
   { href: "/#faq", label: "FAQ" },
@@ -21,7 +21,7 @@ export function Header() {
   const itemCount = lines.reduce((sum, l) => sum + l.quantity, 0);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/80 backdrop-blur-xl">
+    <header className="glass sticky top-0 z-40 border-b border-border/80">
       <div className="container-wirely flex h-16 items-center justify-between gap-4 md:h-18">
         <Link href="/" className="flex items-center gap-2" aria-label="Wirely home">
           <Image
@@ -39,9 +39,10 @@ export function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-muted transition hover:text-foreground"
+              className="group relative text-sm font-medium text-muted transition hover:text-foreground"
             >
               {link.label}
+              <span className="absolute -bottom-1 left-0 h-0.5 w-0 rounded-full bg-accent transition-all duration-300 group-hover:w-full" />
             </Link>
           ))}
         </nav>

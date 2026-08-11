@@ -9,10 +9,13 @@ import { absoluteUrl, productImageSrc } from "@/lib/utils";
 
 type Props = { params: Promise<{ slug: string }> };
 
+export const revalidate = 300;
+
 const RESERVED = new Set([
   "checkout",
   "admin",
   "api",
+  "shop",
   "shipping",
   "returns",
   "robots.txt",

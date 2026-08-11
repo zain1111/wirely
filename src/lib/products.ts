@@ -1,7 +1,7 @@
 import { SEED_PRODUCTS } from "@/lib/data/seed-products";
 import type { Product, ProductVariation } from "@/lib/types";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 
 export { displayPrice, resolveUnitPrice } from "@/lib/pricing";
 
@@ -39,6 +39,13 @@ function mapProduct(
   };
 }
 
+function activeVariations(raw: unknown): ProductVariation[] {
+  if (!Array.isArray(raw)) return [];
+  return (raw as ProductVariation[])
+    .filter((v) => v.is_active)
+    .sort((a, b) => a.sort_order - b.sort_order);
+}
+
 export async function getProducts(): Promise<Product[]> {
   if (!hasSupabaseEnv()) {
     return SEED_PRODUCTS.filter((p) => p.is_active).sort(
@@ -47,10 +54,10 @@ export async function getProducts(): Promise<Product[]> {
   }
 
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data: products, error } = await supabase
       .from("products")
-      .select("*")
+      .select("*, product_variations(*)")
       .eq("is_active", true)
       .order("sort_order", { ascending: true });
 
@@ -58,21 +65,11 @@ export async function getProducts(): Promise<Product[]> {
       return SEED_PRODUCTS.filter((p) => p.is_active);
     }
 
-    const { data: variations } = await supabase
-      .from("product_variations")
-      .select("*")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true });
-
-    const byProduct = new Map<string, ProductVariation[]>();
-    for (const v of variations ?? []) {
-      const list = byProduct.get(v.product_id) ?? [];
-      list.push(v as ProductVariation);
-      byProduct.set(v.product_id, list);
-    }
-
     return products.map((p) =>
-      mapProduct(p as Record<string, unknown>, byProduct.get(p.id) ?? []),
+      mapProduct(
+        p as Record<string, unknown>,
+        activeVariations((p as Record<string, unknown>).product_variations),
+      ),
     );
   } catch {
     return SEED_PRODUCTS.filter((p) => p.is_active);
@@ -87,10 +84,10 @@ export async function getProductBySlug(
   }
 
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data: product, error } = await supabase
       .from("products")
-      .select("*")
+      .select("*, product_variations(*)")
       .eq("slug", slug)
       .eq("is_active", true)
       .maybeSingle();
@@ -99,16 +96,9 @@ export async function getProductBySlug(
       return SEED_PRODUCTS.find((p) => p.slug === slug && p.is_active) ?? null;
     }
 
-    const { data: variations } = await supabase
-      .from("product_variations")
-      .select("*")
-      .eq("product_id", product.id)
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true });
-
     return mapProduct(
       product as Record<string, unknown>,
-      (variations as ProductVariation[]) ?? [],
+      activeVariations((product as Record<string, unknown>).product_variations),
     );
   } catch {
     return SEED_PRODUCTS.find((p) => p.slug === slug && p.is_active) ?? null;

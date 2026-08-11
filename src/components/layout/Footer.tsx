@@ -27,7 +27,7 @@ export function Footer() {
           </p>
           <ul className="space-y-2 text-sm text-white/75">
             <li>
-              <Link href="/#shop" className="hover:text-white">
+              <Link href="/shop" className="hover:text-white">
                 Shop
               </Link>
             </li>

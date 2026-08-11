@@ -4,11 +4,20 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { BadgeCheck, Check, RotateCcw, Truck } from "lucide-react";
 import type { Product } from "@/lib/types";
 import { trackAddToCart, trackBeginCheckout } from "@/lib/analytics";
+import { ProductCard } from "@/components/product/ProductCard";
 import { resolveUnitPrice } from "@/lib/pricing";
 import { formatPkr, productImageSrc } from "@/lib/utils";
 import { useCart } from "@/store/cart";
+
+const trustRow = [
+  { icon: Truck, label: "Free advance delivery" },
+  { icon: RotateCcw, label: "7-day returns" },
+  { icon: BadgeCheck, label: "100% authentic" },
+];
 
 export function ProductDetail({
   product,
@@ -18,6 +27,7 @@ export function ProductDetail({
   related: Product[];
 }) {
   const router = useRouter();
+  const reduce = useReducedMotion();
   const addItem = useCart((s) => s.addItem);
   const variations = product.variations ?? [];
   const [variationId, setVariationId] = useState<string | null>(
@@ -29,6 +39,10 @@ export function ProductDetail({
     [product, variationId],
   );
   const image = product.images[activeImage] || product.images[0];
+  const saving =
+    product.compare_at_price && product.compare_at_price > priced.price
+      ? product.compare_at_price - priced.price
+      : null;
 
   function addToCart(buyNow = false) {
     addItem({
@@ -57,34 +71,56 @@ export function ProductDetail({
   return (
     <div className="container-wirely py-8 md:py-14">
       <nav className="mb-6 text-sm text-muted" aria-label="Breadcrumb">
-        <Link href="/" className="hover:text-foreground">
+        <Link href="/" className="transition-colors hover:text-foreground">
           Home
         </Link>
         <span className="mx-2">/</span>
         <span className="text-foreground">{product.short_name}</span>
       </nav>
 
-      <div className="grid gap-10 lg:grid-cols-2">
-        <div>
-          <div className="relative aspect-square overflow-hidden rounded-[2rem] bg-card">
-            <Image
-              src={productImageSrc(image)}
-              alt={product.name}
-              fill
-              priority
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-            />
+      <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
+        {/* Gallery */}
+        <div className="lg:sticky lg:top-24 lg:self-start">
+          <div className="product-stage relative aspect-square overflow-hidden rounded-[2rem] border border-border">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={image}
+                initial={reduce ? false : { opacity: 0, scale: 1.02 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={reduce ? undefined : { opacity: 0 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute inset-0"
+              >
+                <Image
+                  src={productImageSrc(image)}
+                  alt={product.name}
+                  fill
+                  priority
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
+              </motion.div>
+            </AnimatePresence>
+
+            {saving && (
+              <span className="absolute left-4 top-4 z-10 rounded-full bg-accent px-3.5 py-1.5 text-xs font-bold text-white shadow-lg">
+                Save {formatPkr(saving)}
+              </span>
+            )}
           </div>
+
           {product.images.length > 1 && (
-            <div className="mt-3 flex gap-2 overflow-x-auto">
+            <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
               {product.images.map((src, i) => (
                 <button
                   key={src}
                   type="button"
                   onClick={() => setActiveImage(i)}
-                  className={`relative h-18 w-18 shrink-0 overflow-hidden rounded-2xl border ${
-                    i === activeImage ? "border-accent" : "border-border"
+                  aria-label={`View image ${i + 1}`}
+                  className={`product-stage relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 transition-all duration-200 ${
+                    i === activeImage
+                      ? "ring-glow border-accent"
+                      : "border-transparent opacity-70 hover:opacity-100"
                   }`}
                 >
                   <Image
@@ -92,7 +128,7 @@ export function ProductDetail({
                     alt=""
                     fill
                     className="object-cover"
-                    sizes="72px"
+                    sizes="80px"
                   />
                 </button>
               ))}
@@ -100,38 +136,56 @@ export function ProductDetail({
           )}
         </div>
 
+        {/* Buy panel */}
         <div>
           {product.badge && (
-            <span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent-dark">
+            <motion.span
+              initial={reduce ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-block rounded-full bg-accent-soft px-3.5 py-1.5 text-xs font-semibold text-accent-dark"
+            >
               {product.badge}
-            </span>
+            </motion.span>
           )}
-          <h1 className="mt-3 font-display text-3xl font-bold md:text-4xl">
+          <h1 className="mt-3 font-display text-3xl font-bold leading-tight md:text-4xl">
             {product.name}
           </h1>
-          <p className="mt-4 text-2xl font-semibold text-accent">
-            {formatPkr(priced.price)}
+
+          <div className="mt-5 flex flex-wrap items-baseline gap-3">
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={priced.price}
+                initial={reduce ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={reduce ? undefined : { opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="text-3xl font-bold text-accent"
+              >
+                {formatPkr(priced.price)}
+              </motion.span>
+            </AnimatePresence>
             {product.compare_at_price ? (
-              <span className="ml-3 text-base font-normal text-muted line-through">
+              <span className="text-lg font-normal text-muted line-through">
                 {formatPkr(product.compare_at_price)}
               </span>
             ) : null}
-          </p>
-          <p className="mt-4 leading-relaxed text-muted">{product.description}</p>
+          </div>
+
+          <p className="mt-5 leading-relaxed text-muted">{product.description}</p>
 
           {variations.length > 0 && (
-            <div className="mt-6">
-              <p className="mb-2 text-sm font-semibold">Options</p>
+            <div className="mt-7">
+              <p className="mb-3 text-sm font-semibold">Options</p>
               <div className="flex flex-wrap gap-2">
                 {variations.map((v) => (
                   <button
                     key={v.id}
                     type="button"
                     onClick={() => setVariationId(v.id)}
-                    className={`rounded-full border px-4 py-2 text-sm ${
+                    className={`rounded-full border px-5 py-2.5 text-sm font-medium transition-all duration-200 ${
                       variationId === v.id
-                        ? "border-accent bg-accent-soft text-accent-dark"
-                        : "border-border"
+                        ? "ring-glow border-accent bg-accent-soft text-accent-dark"
+                        : "border-border hover:border-accent/50"
                     }`}
                   >
                     {v.label} · {formatPkr(v.price)}
@@ -141,35 +195,59 @@ export function ProductDetail({
             </div>
           )}
 
-          <ul className="mt-6 space-y-2">
+          <ul className="mt-7 space-y-2.5">
             {product.highlights.map((h) => (
-              <li key={h} className="flex gap-2 text-sm text-foreground">
-                <span className="text-accent">✓</span>
+              <li key={h} className="flex items-start gap-2.5 text-sm text-foreground">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-dark">
+                  <Check className="h-3 w-3" />
+                </span>
                 {h}
               </li>
             ))}
           </ul>
 
           <div className="mt-8 hidden gap-3 md:flex">
-            <button type="button" className="btn-primary" onClick={() => addToCart(false)}>
-              Add to cart
-            </button>
-            <button type="button" className="btn-secondary" onClick={() => addToCart(true)}>
+            <button
+              type="button"
+              className="btn-primary flex-1 justify-center text-base"
+              onClick={() => addToCart(true)}
+            >
               Buy now
             </button>
+            <button
+              type="button"
+              className="btn-secondary flex-1 justify-center text-base"
+              onClick={() => addToCart(false)}
+            >
+              Add to cart
+            </button>
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            {trustRow.map(({ icon: Icon, label }) => (
+              <span
+                key={label}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-muted"
+              >
+                <Icon className="h-3.5 w-3.5 text-accent" />
+                {label}
+              </span>
+            ))}
           </div>
 
           {product.device_compatibility?.length > 0 && (
             <div className="mt-10">
-              <h2 className="font-display text-xl font-semibold">Compatibility</h2>
+              <h2 className="font-display text-xl font-semibold">
+                Compatibility
+              </h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {product.device_compatibility.map((d) => (
                   <div
                     key={d.name}
-                    className="rounded-2xl border border-border bg-card p-4"
+                    className="rounded-2xl border border-border bg-card p-4 transition-colors hover:border-accent/40"
                   >
                     <p className="font-semibold">
-                      <span className="mr-1">{d.icon}</span>
+                      <span className="mr-1.5">{d.icon}</span>
                       {d.name}
                     </p>
                     <p className="mt-1 text-sm text-muted">{d.models}</p>
@@ -182,37 +260,24 @@ export function ProductDetail({
       </div>
 
       {related.length > 0 && (
-        <section className="mt-16">
-          <h2 className="font-display text-2xl font-bold">You may also like</h2>
-          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {related.map((p) => (
-              <Link
-                key={p.id}
-                href={`/${p.slug}`}
-                className="rounded-3xl border border-border bg-card p-4 transition hover:border-accent"
-              >
-                <div className="relative mb-3 aspect-square overflow-hidden rounded-2xl">
-                  <Image
-                    src={productImageSrc(p.images[0])}
-                    alt={p.short_name}
-                    fill
-                    className="object-cover"
-                    sizes="240px"
-                  />
-                </div>
-                <p className="font-semibold">{p.short_name}</p>
-                <p className="text-sm text-accent">{formatPkr(p.price)}</p>
-              </Link>
+        <section className="mt-20">
+          <h2 className="font-display text-2xl font-bold md:text-3xl">
+            You may also like
+          </h2>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {related.map((p, i) => (
+              <ProductCard key={p.id} product={p} index={i} />
             ))}
           </div>
         </section>
       )}
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-3 backdrop-blur md:hidden">
+      {/* Mobile sticky buy bar */}
+      <div className="glass fixed inset-x-0 bottom-0 z-30 border-t border-border p-3 md:hidden">
         <div className="flex items-center gap-2">
-          <div className="flex-1">
-            <p className="text-xs text-muted">{product.short_name}</p>
-            <p className="font-semibold text-accent">{formatPkr(priced.price)}</p>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs text-muted">{product.short_name}</p>
+            <p className="font-bold text-accent">{formatPkr(priced.price)}</p>
           </div>
           <button
             type="button"
@@ -223,7 +288,7 @@ export function ProductDetail({
           </button>
           <button
             type="button"
-            className="btn-primary px-4 py-3 text-sm"
+            className="btn-primary px-5 py-3 text-sm"
             onClick={() => addToCart(true)}
           >
             Buy now

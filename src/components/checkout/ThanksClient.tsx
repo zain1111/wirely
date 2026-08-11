@@ -35,7 +35,7 @@ export function ThanksClient() {
         >
           Confirm on WhatsApp
         </a>
-        <Link href="/#shop" className="btn-secondary">
+        <Link href="/shop" className="btn-secondary">
           Continue shopping
         </Link>
       </div>

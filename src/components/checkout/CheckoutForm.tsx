@@ -130,7 +130,7 @@ export function CheckoutForm() {
       <div className="container-wirely py-20 text-center">
         <h1 className="font-display text-3xl font-bold">Your cart is empty</h1>
         <p className="mt-3 text-muted">Add a product before checking out.</p>
-        <Link href="/#shop" className="btn-primary mt-6 inline-flex">
+        <Link href="/shop" className="btn-primary mt-6 inline-flex">
           Browse products
         </Link>
       </div>
