@@ -27,6 +27,12 @@ export const WHATSAPP_NUMBER =
 
 export const COD_FEE_PKR = Number(process.env.NEXT_PUBLIC_COD_FEE_PKR || 299);
 
+export const ORDER_FROM_EMAIL =
+  process.env.ORDER_FROM_EMAIL || "no-reply@wire-ly.shop";
+
+export const ORDER_ADMIN_EMAIL =
+  process.env.ORDER_ADMIN_EMAIL || "zainazeem2010@gmail.com";
+
 export const GA_ID = process.env.NEXT_PUBLIC_GA_ID || "";
 export const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || "";
 

@@ -116,7 +116,8 @@ export function CheckoutForm() {
         order: String(data.orderNumber),
         total: String(data.total),
         pay: data.paymentMethod,
-        wa: data.whatsappMessage,
+        email: data.email,
+        sent: data.emailSent ? "1" : "0",
       });
       router.push(`/checkout/thanks?${params.toString()}`);
     } catch {
@@ -158,7 +159,8 @@ export function CheckoutForm() {
         <form onSubmit={onSubmit} className="space-y-4 rounded-[2rem] border border-border bg-card p-6 md:p-8">
           <h1 className="font-display text-3xl font-bold">Checkout</h1>
           <p className="text-sm text-muted">
-            One short form. We’ll confirm on WhatsApp after you place the order.
+            One short form. You&apos;ll get a confirmation email right after
+            placing your order.
           </p>
 
           <div className="grid gap-3 md:grid-cols-2">
@@ -219,7 +221,8 @@ export function CheckoutForm() {
               <span>
                 <span className="font-semibold">Advance payment</span>
                 <span className="mt-1 block text-sm text-muted">
-                  Free nationwide delivery. We share JazzCash / EasyPaisa / bank details on WhatsApp.
+                  Free nationwide delivery. Payment details are sent by email and
+                  phone after you order.
                 </span>
               </span>
             </label>

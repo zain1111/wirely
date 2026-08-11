@@ -53,7 +53,8 @@ export type PlaceOrderResult =
       orderNumber: number | string;
       total: number;
       paymentMethod: "advance" | "cod";
-      whatsappMessage: string;
+      email: string;
+      emailSent: boolean;
     }
   | { ok: false; error: string; status?: number };
 
@@ -113,17 +114,8 @@ export async function placeOrder(
   const total = Math.max(0, subtotal - discount + codFee);
 
   const orderNumber = `WL-${Date.now().toString().slice(-8)}`;
-  const whatsappMessage = buildWhatsAppMessage({
-    orderNumber,
-    name: data.customerName,
-    phone: data.phone,
-    city: data.city,
-    total,
-    paymentMethod: data.paymentMethod,
-    items: lines,
-  });
 
-  await sendOrderEmails({
+  const emailResult = await sendOrderEmails({
     orderNumber,
     customerName: data.customerName,
     email: data.email,
@@ -145,31 +137,7 @@ export async function placeOrder(
     orderNumber,
     total,
     paymentMethod: data.paymentMethod,
-    whatsappMessage,
+    email: data.email,
+    emailSent: emailResult.sent,
   };
-}
-
-function buildWhatsAppMessage(opts: {
-  orderNumber: number | string;
-  name: string;
-  phone: string;
-  city: string;
-  total: number;
-  paymentMethod: "advance" | "cod";
-  items: { product_name: string; quantity: number; line_total: number }[];
-}): string {
-  const lines = opts.items
-    .map((i) => `• ${i.product_name} × ${i.quantity}`)
-    .join("\n");
-  return [
-    `Hi Wirely! I just placed order #${opts.orderNumber}.`,
-    `Name: ${opts.name}`,
-    `Phone: ${opts.phone}`,
-    `City: ${opts.city}`,
-    `Payment: ${opts.paymentMethod === "cod" ? "Cash on Delivery" : "Advance"}`,
-    `Total: Rs ${opts.total.toLocaleString("en-PK")}`,
-    "",
-    "Items:",
-    lines,
-  ].join("\n");
 }
