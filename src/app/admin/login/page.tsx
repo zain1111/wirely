@@ -1,12 +1,10 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -22,24 +20,44 @@ export default function AdminLoginPage() {
     }
 
     const form = new FormData(e.currentTarget);
-    const email = String(form.get("email") || "");
+    const email = String(form.get("email") || "").trim();
     const password = String(form.get("password") || "");
 
     try {
       const supabase = createClient();
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+
+      // Don't hang forever if the network/API stalls
+      const loginPromise = supabase.auth.signInWithPassword({ email, password });
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        window.setTimeout(
+          () => reject(new Error("Sign-in timed out. Check your Supabase keys and network.")),
+          15000,
+        );
       });
+
+      const { data, error: authError } = await Promise.race([
+        loginPromise,
+        timeoutPromise,
+      ]);
+
       if (authError) {
         setError(authError.message);
         setPending(false);
         return;
       }
-      router.push("/admin");
-      router.refresh();
-    } catch {
-      setError("Login failed.");
+
+      if (!data.session) {
+        setError(
+          "Signed in but no session was created. In Supabase → Authentication → Providers, ensure Email is enabled. If email confirmation is required, confirm the user first.",
+        );
+        setPending(false);
+        return;
+      }
+
+      // Hard navigation so middleware sees fresh auth cookies
+      window.location.assign("/admin");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed.");
       setPending(false);
     }
   }
@@ -48,13 +66,17 @@ export default function AdminLoginPage() {
     <div className="mx-auto max-w-md rounded-3xl border border-border bg-card p-8">
       <h1 className="font-display text-2xl font-bold">Admin login</h1>
       <p className="mt-2 text-sm text-muted">
-        Sign in with your Supabase admin user (set role = admin in profiles).
+        Use the email/password from Supabase Authentication → Users. After first
+        login works, set that user&apos;s{" "}
+        <code className="rounded bg-background px-1">profiles.role</code> to{" "}
+        <code className="rounded bg-background px-1">admin</code>.
       </p>
       <form onSubmit={onSubmit} className="mt-6 space-y-3">
         <input
           name="email"
           type="email"
           required
+          autoComplete="username"
           placeholder="Email"
           className="w-full rounded-xl border border-border bg-background px-3 py-2.5"
         />
@@ -62,6 +84,7 @@ export default function AdminLoginPage() {
           name="password"
           type="password"
           required
+          autoComplete="current-password"
           placeholder="Password"
           className="w-full rounded-xl border border-border bg-background px-3 py-2.5"
         />
