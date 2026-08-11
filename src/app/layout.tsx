@@ -36,13 +36,13 @@ export const metadata: Metadata = {
     title: `${SITE_NAME} — ${SITE_TAGLINE}`,
     description:
       "Authentic Apple accessories with free nationwide delivery and WhatsApp support.",
-    images: [{ url: absoluteUrl("/products/airpods-pro-2.jpeg") }],
+    images: [{ url: absoluteUrl("/products/airpods-pro-2.webp") }],
   },
   twitter: {
     card: "summary_large_image",
     title: `${SITE_NAME} Pakistan`,
     description: SITE_TAGLINE,
-    images: [absoluteUrl("/products/airpods-pro-2.jpeg")],
+    images: [absoluteUrl("/products/airpods-pro-2.webp")],
   },
   icons: {
     icon: "/favicon.png",

@@ -31,7 +31,7 @@ export function OfferBand() {
             </p>
             <Link
               href="/shop"
-              className="btn-secondary mt-8 border-white/40 text-white hover:border-white hover:bg-white/10"
+              className="btn-secondary-light mt-8"
             >
               Choose a product
             </Link>

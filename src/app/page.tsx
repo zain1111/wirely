@@ -1,6 +1,6 @@
 import { Faq } from "@/components/home/Faq";
 import { FinalCta } from "@/components/home/FinalCta";
-import { HeroSlider } from "@/components/home/HeroSlider";
+import { HeroScroll } from "@/components/home/HeroScroll";
 import { OfferBand } from "@/components/home/OfferBand";
 import { ProductShowcase } from "@/components/home/ProductShowcase";
 import { Reviews } from "@/components/home/Reviews";
@@ -12,7 +12,7 @@ export const revalidate = 300;
 export default function HomePage() {
   return (
     <>
-      <HeroSlider />
+      <HeroScroll />
       <SocialProof />
       <ProductShowcase />
       <WhyUs />

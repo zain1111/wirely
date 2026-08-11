@@ -24,7 +24,7 @@ export const SEED_PRODUCTS: Product[] = [
       "Built-in safety: overheat, overcurrent, short-circuit protection",
       "Compatible with all USB-C devices",
     ],
-    images: ["/products/40w-charger.jpeg", "/products/40w-charger-alt.jpeg"],
+    images: ["/products/40w-charger.webp"],
     device_compatibility: [
       { icon: "📱", name: "iPhone", models: "iPhone 15, 15 Pro, 16, 16 Pro, 16e" },
       { icon: "💻", name: "MacBook", models: "MacBook Air M1/M2/M3" },
@@ -58,7 +58,7 @@ export const SEED_PRODUCTS: Product[] = [
       "Durable woven design for daily use",
       "Universal USB-C to USB-C compatibility",
     ],
-    images: ["/products/cable.jpeg"],
+    images: ["/products/cable.webp"],
     device_compatibility: [
       { icon: "📱", name: "iPhone", models: "iPhone 15, 15 Pro, 16, 16 Pro, 16e" },
       { icon: "💻", name: "MacBook", models: "All USB-C MacBooks" },
@@ -93,10 +93,7 @@ export const SEED_PRODUCTS: Product[] = [
       "Touch control + swipe volume on stem",
       "MagSafe & USB-C charging case (IP54)",
     ],
-    images: [
-      "/products/airpods-pro-2.jpeg",
-      "/products/airpods-pro-2-alt.jpeg",
-    ],
+    images: ["/products/airpods-pro-2.webp"],
     device_compatibility: [
       { icon: "📱", name: "iPhone", models: "iPhone 6s and later" },
       { icon: "📱", name: "iPad", models: "iPad (5th gen+), iPad Air, iPad Pro" },
@@ -131,7 +128,7 @@ export const SEED_PRODUCTS: Product[] = [
       "USB-C + wireless (Qi/MagSafe) charging",
       "IP54 dust & water resistance",
     ],
-    images: ["/products/airpods-4.jpeg", "/products/airpods-4-alt.jpeg"],
+    images: ["/products/airpods-4.webp"],
     device_compatibility: [
       { icon: "📱", name: "iPhone", models: "iPhone 6s and later" },
       { icon: "📱", name: "iPad", models: "iPad (5th gen+), iPad Air, iPad Pro" },
@@ -165,10 +162,7 @@ export const SEED_PRODUCTS: Product[] = [
       "Perfect for MacBook Air fast charging",
       "Ideal gift set or upgrade kit",
     ],
-    images: [
-      "/products/combo-charger-cable.jpeg",
-      "/products/40w-cable.jpeg",
-    ],
+    images: ["/products/combo-charger-cable.webp"],
     device_compatibility: [
       { icon: "📱", name: "iPhone", models: "iPhone 15, 15 Pro, 16, 16 Pro, 16e" },
       { icon: "💻", name: "MacBook", models: "MacBook Air M1/M2/M3" },
