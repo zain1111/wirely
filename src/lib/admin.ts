@@ -62,9 +62,9 @@ export async function getAdminStats() {
 }
 
 export async function getAdminProducts(): Promise<Product[]> {
-  if (!hasSupabaseEnv()) return SEED_PRODUCTS;
+  if (!hasServiceRole()) return SEED_PRODUCTS;
   try {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     const { data } = await supabase
       .from("products")
       .select("*, product_variations(*)")

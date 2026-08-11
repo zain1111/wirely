@@ -5,7 +5,6 @@ import { FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, Link2, Loader2, Trash2, Upload } from "lucide-react";
 import type { Product } from "@/lib/types";
-import { createClient } from "@/lib/supabase/client";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { uploadProductImage } from "@/lib/storage";
 import { productImageSrc } from "@/lib/utils";
@@ -108,18 +107,17 @@ export function ProductEditor({ product }: { product?: Product }) {
     };
 
     try {
-      const supabase = createClient();
-      if (isNew) {
-        const { error: insertError } = await supabase
-          .from("products")
-          .insert(payload);
-        if (insertError) throw insertError;
-      } else {
-        const { error: updateError } = await supabase
-          .from("products")
-          .update(payload)
-          .eq("id", product.id);
-        if (updateError) throw updateError;
+      const res = await fetch("/api/admin/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...payload,
+          id: isNew ? undefined : product.id,
+        }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        throw new Error(data.error || "Save failed");
       }
       router.push("/admin/products");
       router.refresh();
