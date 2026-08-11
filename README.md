@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Wirely (Next.js + Supabase + Netlify)
 
-## Getting Started
+TypeScript rebuild of the Wirely Pakistan storefront: conversion funnel, cart/checkout, SEO, scroll motion, and admin CMS.
 
-First, run the development server:
+## Quick start
 
 ```bash
+cd web
+cp .env.example .env.local
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Without Supabase env vars the catalog uses the built-in seed products and demo checkout still works (orders are not persisted).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Supabase setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Full walkthrough: [../docs/SUPABASE_SETUP.md](../docs/SUPABASE_SETUP.md)
 
-## Learn More
+Short version: copy API keys into `.env.local` → run `001_initial.sql` then `002_seed_products.sql` in SQL Editor → create Auth user → set `profiles.role = 'admin'`.
 
-To learn more about Next.js, take a look at the following resources:
+## Netlify deploy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Full walkthrough: [../docs/NETLIFY_DEPLOY.md](../docs/NETLIFY_DEPLOY.md)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Note:** Netlify’s browser drag-and-drop is static-only and will not run this Next.js app. Use:
 
-## Deploy on Vercel
+```bash
+npm run deploy:prod
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Or connect Git with **base directory** `web`. Add env vars from `.env.example` in the Netlify UI.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Go-live checklist
+
+- [ ] Supabase schema + seed applied
+- [ ] Admin user role set to `admin`
+- [ ] Netlify env vars configured
+- [ ] Resend domain verified for order emails
+- [ ] Turnstile keys set (optional)
+- [ ] GA4 / Google Ads IDs verified
+- [ ] Test advance + COD checkout end-to-end
+- [ ] Confirm 301s: `/product/:slug`, old combo slug
+- [ ] DNS cutover from PHP host
+- [ ] Rotate any secrets that lived in the old PHP `db_config.php`
+
+## Scripts
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Local development |
+| `npm run build` | Production build |
+| `npm run start` | Serve production build |
+| `npm run lint` | ESLint |
+
+## Structure
+
+- `src/app` — routes (storefront, checkout, admin, API)
+- `src/components` — UI, funnel sections, motion
+- `src/lib` — products, orders, coupons, Supabase, email
+- `src/store` — Zustand cart (localStorage)
+- `../supabase` — SQL migrations + optional Edge Function
