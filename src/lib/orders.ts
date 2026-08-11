@@ -1,10 +1,7 @@
 import { z } from "zod";
 import { COD_FEE_PKR } from "@/lib/constants";
-import { computeDiscount, normalizeCouponCode } from "@/lib/coupons";
 import { sendOrderEmails } from "@/lib/email";
 import { SEED_PRODUCTS } from "@/lib/data/seed-products";
-import { hasServiceRole } from "@/lib/supabase/env";
-import { createServiceClient } from "@/lib/supabase/server";
 import type { Product } from "@/lib/types";
 import { resolveUnitPrice } from "@/lib/pricing";
 
@@ -45,25 +42,8 @@ async function verifyTurnstile(token?: string | null): Promise<boolean> {
   return Boolean(data.success);
 }
 
-async function loadProductsBySlugs(slugs: string[]): Promise<Product[]> {
-  if (!hasServiceRole()) {
-    return SEED_PRODUCTS.filter((p) => slugs.includes(p.slug));
-  }
-  const supabase = createServiceClient();
-  const { data } = await supabase
-    .from("products")
-    .select("*, product_variations(*)")
-    .in("slug", slugs)
-    .eq("is_active", true);
-
-  if (!data?.length) {
-    return SEED_PRODUCTS.filter((p) => slugs.includes(p.slug));
-  }
-
-  return data.map((row) => ({
-    ...(row as Product),
-    variations: (row.product_variations as Product["variations"]) ?? [],
-  }));
+function loadProductsBySlugs(slugs: string[]): Product[] {
+  return SEED_PRODUCTS.filter((p) => slugs.includes(p.slug) && p.is_active);
 }
 
 export type PlaceOrderResult =
@@ -92,7 +72,7 @@ export async function placeOrder(
   }
 
   const slugs = [...new Set(data.items.map((i) => i.productSlug))];
-  const products = await loadProductsBySlugs(slugs);
+  const products = loadProductsBySlugs(slugs);
   const bySlug = new Map(products.map((p) => [p.slug, p]));
 
   const lines: {
@@ -127,143 +107,24 @@ export async function placeOrder(
   }
 
   const subtotal = lines.reduce((s, l) => s + l.line_total, 0);
-  let discount = 0;
-  let couponId: string | null = null;
-  let couponCode: string | null = null;
-
-  if (data.couponCode?.trim() && hasServiceRole()) {
-    const supabase = createServiceClient();
-    const code = normalizeCouponCode(data.couponCode);
-    const { data: coupon } = await supabase
-      .from("coupons")
-      .select("*")
-      .eq("code", code)
-      .maybeSingle();
-
-    if (coupon) {
-      const result = computeDiscount(coupon, subtotal);
-      if (!result.ok) {
-        return { ok: false, error: result.error, status: 400 };
-      }
-      discount = result.discount;
-      couponId = coupon.id;
-      couponCode = coupon.code;
-    }
-  }
-
+  const discount = 0;
+  const couponCode: string | null = null;
   const codFee = data.paymentMethod === "cod" ? COD_FEE_PKR : 0;
   const total = Math.max(0, subtotal - discount + codFee);
 
-  if (!hasServiceRole()) {
-    const orderNumber = `DEMO-${Date.now().toString().slice(-8)}`;
-    const whatsappMessage = buildWhatsAppMessage({
-      orderNumber,
-      name: data.customerName,
-      phone: data.phone,
-      city: data.city,
-      total,
-      paymentMethod: data.paymentMethod,
-      items: lines,
-    });
-
-    await sendOrderEmails({
-      orderNumber,
-      customerName: data.customerName,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-      city: data.city,
-      paymentMethod: data.paymentMethod,
-      codFee,
-      discount,
-      subtotal,
-      total,
-      couponCode,
-      items: lines,
-    });
-
-    return {
-      ok: true,
-      orderId: orderNumber,
-      orderNumber,
-      total,
-      paymentMethod: data.paymentMethod,
-      whatsappMessage,
-    };
-  }
-
-  const supabase = createServiceClient();
-
-  const { data: order, error: orderError } = await supabase
-    .from("orders")
-    .insert({
-      customer_name: data.customerName,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-      city: data.city,
-      subtotal_before_discount: subtotal,
-      discount_amount: discount,
-      coupon_id: couponId,
-      coupon_code: couponCode,
-      payment_method: data.paymentMethod,
-      cod_fee: codFee,
-      total_price: total,
-      status: "pending",
-    })
-    .select("id, order_number")
-    .single();
-
-  if (orderError || !order) {
-    return {
-      ok: false,
-      error: orderError?.message || "Could not create order.",
-      status: 500,
-    };
-  }
-
-  const { error: itemsError } = await supabase.from("order_items").insert(
-    lines.map((l) => ({
-      order_id: order.id,
-      ...l,
-    })),
-  );
-
-  if (itemsError) {
-    await supabase.from("orders").delete().eq("id", order.id);
-    return { ok: false, error: "Could not save order items.", status: 500 };
-  }
-
-  if (couponId) {
-    const { data: coupon } = await supabase
-      .from("coupons")
-      .select("used_count")
-      .eq("id", couponId)
-      .single();
-    if (coupon) {
-      await supabase
-        .from("coupons")
-        .update({ used_count: (coupon.used_count ?? 0) + 1 })
-        .eq("id", couponId);
-    }
-  }
-
-  for (const line of lines) {
-    const { data: product } = await supabase
-      .from("products")
-      .select("id, stock")
-      .eq("slug", line.product_slug)
-      .maybeSingle();
-    if (product) {
-      await supabase
-        .from("products")
-        .update({ stock: Math.max(0, product.stock - line.quantity) })
-        .eq("id", product.id);
-    }
-  }
+  const orderNumber = `WL-${Date.now().toString().slice(-8)}`;
+  const whatsappMessage = buildWhatsAppMessage({
+    orderNumber,
+    name: data.customerName,
+    phone: data.phone,
+    city: data.city,
+    total,
+    paymentMethod: data.paymentMethod,
+    items: lines,
+  });
 
   await sendOrderEmails({
-    orderNumber: order.order_number,
+    orderNumber,
     customerName: data.customerName,
     email: data.email,
     phone: data.phone,
@@ -278,20 +139,10 @@ export async function placeOrder(
     items: lines,
   });
 
-  const whatsappMessage = buildWhatsAppMessage({
-    orderNumber: order.order_number,
-    name: data.customerName,
-    phone: data.phone,
-    city: data.city,
-    total,
-    paymentMethod: data.paymentMethod,
-    items: lines,
-  });
-
   return {
     ok: true,
-    orderId: order.id,
-    orderNumber: order.order_number,
+    orderId: orderNumber,
+    orderNumber,
     total,
     paymentMethod: data.paymentMethod,
     whatsappMessage,

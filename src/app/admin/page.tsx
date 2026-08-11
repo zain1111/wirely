@@ -11,7 +11,8 @@ export default async function AdminDashboardPage() {
         <h1 className="font-display text-3xl font-bold">Dashboard</h1>
         {stats.usingSeed && (
           <p className="mt-2 text-sm text-muted">
-            Running on seed catalog — add Supabase credentials for live orders & analytics.
+            Static mode — catalog from seed files. Orders go to WhatsApp / email;
+            nothing is saved to a database.
           </p>
         )}
       </div>

@@ -1,6 +1,6 @@
 import type { Product } from "@/lib/types";
 
-/** Local catalog fallback when Supabase is not configured. */
+/** Static catalog — edit this file to change products on the storefront. */
 export const SEED_PRODUCTS: Product[] = [
   {
     id: "seed-40w-charger",
