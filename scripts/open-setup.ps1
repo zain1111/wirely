@@ -1,7 +1,7 @@
 # Opens the setup guides in the default browser / editor-friendly paths.
-$repo = Resolve-Path (Join-Path $PSScriptRoot "..\..")
-$supabase = Join-Path $repo "docs\SUPABASE_SETUP.md"
-$netlify = Join-Path $repo "docs\NETLIFY_DEPLOY.md"
+$repo = Resolve-Path (Join-Path $PSScriptRoot "..")
+$supabase = Join-Path $repo "supabase\migrations\001_initial.sql"
+$netlify = Join-Path $repo "README.md"
 
 Write-Host "Supabase setup guide:"
 Write-Host "  $supabase"
@@ -11,7 +11,7 @@ Write-Host "  $netlify"
 Write-Host ""
 Write-Host "Quick Supabase steps:"
 Write-Host "  1. Dashboard → Project Settings → API → copy URL + anon + service_role"
-Write-Host "  2. Paste into web\.env.local"
+Write-Host "  2. Paste into .env.local"
 Write-Host "  3. SQL Editor → run supabase\migrations\001_initial.sql"
 Write-Host "  4. SQL Editor → run supabase\migrations\002_seed_products.sql"
 Write-Host "  5. Auth → create user → set profiles.role = 'admin'"

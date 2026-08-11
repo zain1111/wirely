@@ -15,9 +15,7 @@ Open [http://localhost:3000](http://localhost:3000). Without Supabase env vars t
 
 ## Supabase setup
 
-Full walkthrough: [../docs/SUPABASE_SETUP.md](../docs/SUPABASE_SETUP.md)
-
-Short version: copy API keys into `.env.local` → run `001_initial.sql` then `002_seed_products.sql` in SQL Editor → create Auth user → set `profiles.role = 'admin'`.
+Short version: copy API keys into `.env.local` → run `supabase/migrations/001_initial.sql` then `002_seed_products.sql` in SQL Editor → create Auth user → set `profiles.role = 'admin'`.
 
 ## Netlify deploy
 
@@ -59,4 +57,4 @@ Or connect Git with **base directory** `web`. Add env vars from `.env.example` i
 - `src/components` — UI, funnel sections, motion
 - `src/lib` — products, orders, coupons, Supabase, email
 - `src/store` — Zustand cart (localStorage)
-- `../supabase` — SQL migrations + optional Edge Function
+- `supabase/migrations` — SQL schema + seed data
