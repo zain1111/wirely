@@ -1,7 +1,26 @@
 export const SITE_NAME = "Wirely";
 export const SITE_TAGLINE = "Apple accessories, delivered across Pakistan";
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://wire-ly.shop";
+
+/**
+ * Tolerates malformed NEXT_PUBLIC_SITE_URL values (missing protocol,
+ * whitespace, trailing slashes) — an invalid URL here would otherwise
+ * crash `next build` via `new URL(SITE_URL)` in the root layout metadata.
+ */
+function normalizeSiteUrl(raw: string | undefined): string {
+  const fallback = "https://wire-ly.shop";
+  if (!raw?.trim()) return fallback;
+  let candidate = raw.trim().replace(/\/+$/, "");
+  if (!/^https?:\/\//i.test(candidate)) {
+    candidate = `https://${candidate}`;
+  }
+  try {
+    return new URL(candidate).origin;
+  } catch {
+    return fallback;
+  }
+}
+
+export const SITE_URL = normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
 
 export const WHATSAPP_NUMBER =
   process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "923431143434";
