@@ -12,3 +12,6 @@ alter table public.products
 update public.products
 set purchase_mode = 'checkout'
 where slug = 'samsung-usb-c-charger';
+
+-- Refresh the API schema cache so saves stop failing immediately
+notify pgrst, 'reload schema';

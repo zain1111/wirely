@@ -41,11 +41,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const { id, purchase_mode, ...payloadBase } = parsed.data;
+    const { id, purchase_mode: _purchaseMode, ...payloadBase } = parsed.data;
+    // Omit purchase_mode until migration 012 is applied — otherwise PostgREST
+    // rejects the entire update ("column not in schema cache") and stock is not saved.
     let payload: Record<string, unknown> = { ...payloadBase };
-    if (purchase_mode !== undefined) {
-      payload.purchase_mode = purchase_mode;
-    }
     // Prefer service role for writes (reliable). Fall back to signed-in admin session + RLS.
     const db = admin.service ?? admin.session;
 
