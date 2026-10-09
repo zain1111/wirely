@@ -126,7 +126,7 @@ export function ProductEditor({
           id: isNew ? undefined : product.id,
         }),
       });
-      const data = (await res.json()) as { error?: string };
+      const data = (await res.json()) as { error?: string; stock?: number };
       if (!res.ok) {
         throw new Error(data.error || "Save failed");
       }

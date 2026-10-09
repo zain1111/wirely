@@ -41,10 +41,39 @@ export async function POST(request: Request) {
       );
     }
 
-    const { id, ...payload } = parsed.data;
-    // Use session client so writes work even when the new sb_secret key
-    // does not fully bypass RLS. Admin policies require is_admin().
-    const db = admin.session;
+    const { id, purchase_mode, ...payloadBase } = parsed.data;
+    let payload: Record<string, unknown> = { ...payloadBase };
+    if (purchase_mode !== undefined) {
+      payload.purchase_mode = purchase_mode;
+    }
+    // Prefer service role for writes (reliable). Fall back to signed-in admin session + RLS.
+    const db = admin.service ?? admin.session;
+
+    async function updateProductRow(productId: string) {
+      let result = await db
+        .from("products")
+        .update(payload)
+        .eq("id", productId)
+        .select("id, slug, stock")
+        .maybeSingle();
+
+      if (
+        result.error &&
+        /purchase_mode|column/i.test(result.error.message) &&
+        "purchase_mode" in payload
+      ) {
+        const { purchase_mode: _removed, ...withoutMode } = payload;
+        payload = withoutMode;
+        result = await db
+          .from("products")
+          .update(payload)
+          .eq("id", productId)
+          .select("id, slug, stock")
+          .maybeSingle();
+      }
+
+      return result;
+    }
 
     if (id && !z.string().uuid().safeParse(id).success) {
       return NextResponse.json(
@@ -68,20 +97,45 @@ export async function POST(request: Request) {
         .select("slug")
         .eq("id", id)
         .maybeSingle();
-      const { error } = await db.from("products").update(payload).eq("id", id);
+
+      const { data: updated, error } = await updateProductRow(id);
+
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
+
+      if (!updated) {
+        return NextResponse.json(
+          {
+            error:
+              "No product row was updated. Confirm this product id is from Supabase (UUID), not the seed file, and that your user has profiles.role = 'admin'.",
+          },
+          { status: 404 },
+        );
+      }
+
       if (existing?.slug) refreshStorefront(String(existing.slug));
       if (existing?.slug !== payload.slug) refreshStorefront(payload.slug);
-      return NextResponse.json({ ok: true, id });
+      return NextResponse.json({ ok: true, id, stock: updated.stock });
     }
 
-    const { data, error } = await db
-      .from("products")
-      .insert(payload)
-      .select("id")
-      .single();
+    let insertResult = await db.from("products").insert(payload).select("id").single();
+
+    if (
+      insertResult.error &&
+      /purchase_mode|column/i.test(insertResult.error.message) &&
+      "purchase_mode" in payload
+    ) {
+      const { purchase_mode: _removed, ...withoutMode } = payload;
+      payload = withoutMode;
+      insertResult = await db
+        .from("products")
+        .insert(payload)
+        .select("id")
+        .single();
+    }
+
+    const { data, error } = insertResult;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
