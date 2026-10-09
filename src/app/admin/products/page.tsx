@@ -1,19 +1,40 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getAdminProducts } from "@/lib/admin";
+import { canEditProductsInAdmin, getAdminProducts } from "@/lib/admin";
 import { formatPkr, productImageSrc } from "@/lib/utils";
 
 export default async function AdminProductsPage() {
+  const canEdit = canEditProductsInAdmin();
   const products = await getAdminProducts();
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <h1 className="font-display text-3xl font-bold">Products</h1>
-        <Link href="/admin/products/new" className="btn-primary text-sm">
-          Add product
-        </Link>
+        {canEdit && (
+          <Link href="/admin/products/new" className="btn-primary text-sm">
+            Add product
+          </Link>
+        )}
       </div>
+
+      {!canEdit && (
+        <p className="rounded-2xl border border-border bg-accent-soft/40 px-4 py-3 text-sm text-accent-dark">
+          Previewing the seed catalog from{" "}
+          <code className="rounded bg-card px-1">seed-products.ts</code>. Configure
+          Supabase on the server to list and edit live database products.
+        </p>
+      )}
+
+      {canEdit && products.length === 0 && (
+        <p className="rounded-2xl border border-border bg-card px-4 py-3 text-sm text-muted">
+          No products in Supabase yet. Run{" "}
+          <code className="rounded bg-background px-1">
+            supabase/migrations/002_seed_products.sql
+          </code>{" "}
+          in the SQL editor, or click <strong>Add product</strong>.
+        </p>
+      )}
 
       <div className="overflow-hidden rounded-3xl border border-border bg-card">
         <table className="w-full text-left text-sm">
@@ -56,7 +77,7 @@ export default async function AdminProductsPage() {
                     href={`/admin/products/${p.id}`}
                     className="text-accent underline"
                   >
-                    Edit
+                    {canEdit ? "Edit" : "View"}
                   </Link>
                 </td>
               </tr>

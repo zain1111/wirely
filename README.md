@@ -4,46 +4,59 @@ TypeScript storefront for Wirely Pakistan: conversion funnel, cart/checkout, SEO
 
 ## Mode
 
-The site runs in **static mode** (`STATIC_MODE = true` in `src/lib/config.ts`):
+By default the site uses **Supabase** for the product catalog and **admin product editing** when these env vars are set:
 
-- Catalog comes from `src/lib/data/seed-products.ts`
-- Product images live in `public/products/`
-- Checkout confirms via WhatsApp (+ optional Resend email) — orders are **not** saved to a database
-- Admin is a read-only view of the seed catalog
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (server only — required for admin saves & uploads)
+
+If Supabase is missing, the storefront falls back to `src/lib/data/seed-products.ts`.
+
+Set `WIRELY_STATIC_MODE=true` to force seed-only mode (no database connections).
+
+Checkout uses **email** (Resend) for order confirmations; orders are not stored in the DB unless you extend `src/lib/orders.ts`.
 
 ## Quick start
 
 ```bash
 cp .env.example .env.local
+# Fill Supabase + Resend keys in .env.local
 npm install
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## Edit products
+## Admin product editing
 
-1. Add/replace images in `public/products/`
-2. Update entries in `src/lib/data/seed-products.ts`
-3. Refresh the site
+1. Run SQL migrations in `supabase/migrations/` (Supabase Dashboard → SQL Editor).
+2. Create a user under **Authentication → Users**.
+3. Set `profiles.role` to `admin` for that user in the Table Editor.
+4. Sign in at `/admin/login`.
+5. Edit products under **Admin → Products** (image upload uses Supabase Storage; run `007_fix_storage_rls.sql` if uploads fail).
 
-## Netlify deploy
+## Netlify env vars
 
-```bash
-npm run deploy:prod
-```
+Copy from `.env.example`. Required for live admin editing:
 
-Or connect Git and set env vars from `.env.example` in the Netlify UI. Do **not** require Supabase vars.
+| Variable | Scopes |
+|----------|--------|
+| `NEXT_PUBLIC_SUPABASE_URL` | All |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | All |
+| `SUPABASE_SERVICE_ROLE_KEY` | Builds, Functions (secret) |
+| `RESEND_API_KEY` | Functions |
+| `ORDER_ADMIN_EMAIL` | Functions |
+
+Redeploy after changing env vars.
 
 ## Go-live checklist
 
-- [ ] Products & images finalized in seed files
-- [ ] Netlify env vars configured (site URL, WhatsApp, analytics)
-- [ ] Resend domain verified for order emails (optional)
-- [ ] Turnstile keys set (optional)
+- [ ] Supabase migrations applied + admin user with `profiles.role = admin`
+- [ ] Netlify env vars set (Supabase + Resend)
+- [ ] Resend domain verified for `no-reply@wire-ly.shop`
+- [ ] Test checkout → customer + admin emails
+- [ ] Test admin product save + image upload
 - [ ] GA4 / Google Ads IDs verified
-- [ ] Test advance + COD checkout + WhatsApp handoff
-- [ ] Confirm 301s: `/product/:slug`, old combo slug
 
 ## Scripts
 
@@ -58,9 +71,7 @@ Or connect Git and set env vars from `.env.example` in the Netlify UI. Do **not*
 
 - `src/app` — routes (storefront, checkout, admin, API)
 - `src/components` — UI, funnel sections, motion
-- `src/lib` — products, orders, coupons, email
-- `src/lib/data/seed-products.ts` — static catalog
+- `src/lib` — products, orders, email, Supabase helpers
+- `src/lib/data/seed-products.ts` — fallback catalog
 - `src/store` — Zustand cart (localStorage)
-- `public/products` — product images
-- `public/videos` — homepage showcase videos
-- `public/hero` — hero product art
+- `supabase/migrations` — database schema & seed SQL
