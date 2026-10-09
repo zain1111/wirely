@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { formatPublicOrderNumber } from "@/lib/utils";
+import { formatPublicOrderNumber, whatsappUrl } from "@/lib/utils";
 
 export function ThanksClient() {
   const params = useSearchParams();
@@ -16,10 +16,21 @@ export function ThanksClient() {
       <h1 className="mt-3 font-display text-4xl font-bold">Thank you!</h1>
       <p className="mx-auto mt-4 max-w-xl text-muted">
         Your order number is{" "}
-        <strong className="text-foreground">{order}</strong>.
+        <strong className="text-foreground">{order}</strong>. If you need any
+        details about your order, please contact us on WhatsApp.
       </p>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <Link href="/shop" className="btn-primary">
+        <a
+          href={whatsappUrl(
+            `Hi Wirely, I need details about my order ${order}.`,
+          )}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-primary"
+        >
+          Contact us on WhatsApp
+        </a>
+        <Link href="/shop" className="btn-secondary">
           Continue shopping
         </Link>
         <Link href="/" className="btn-secondary">
