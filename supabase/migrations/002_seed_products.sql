@@ -1,5 +1,5 @@
--- Wirely product seed data
--- Run after 001_initial.sql in Supabase Dashboard → SQL Editor
+-- Wirely product seed data (idempotent — safe to run again)
+-- Run in Supabase Dashboard → SQL Editor (after 001_initial.sql)
 
 insert into public.products (
   slug,
@@ -34,7 +34,7 @@ values
     null,
     null,
     '["40W standard / 60W max dynamic output","USB-C Power Delivery for iPhone & MacBook","Compact, travel-friendly design","Built-in safety: overheat, overcurrent, short-circuit protection","Compatible with all USB-C devices"]'::jsonb,
-    '["/products/40w-charger.webp"]'::jsonb,
+    '["/products/40w-charger.jpeg","/products/40w-charger-alt.jpeg"]'::jsonb,
     '[{"icon":"📱","name":"iPhone","models":"iPhone 15, 15 Pro, 16, 16 Pro, 16e"},{"icon":"💻","name":"MacBook","models":"MacBook Air M1/M2/M3"},{"icon":"📱","name":"iPad","models":"iPad Pro, iPad Air (USB-C)"},{"icon":"⌚","name":"Apple Watch","models":"Series 7+ (with USB-C cable)"}]'::jsonb,
     50,
     0,
@@ -53,10 +53,29 @@ values
     null,
     null,
     '["Supports up to 60W fast charging","High-speed USB 2.0 data transfer (480 Mbps)","1 meter length — ideal for desk & travel","Durable woven design for daily use","Universal USB-C to USB-C compatibility"]'::jsonb,
-    '["/products/cable.webp"]'::jsonb,
+    '["/products/usb-c-cable-detail.png","/products/cable.jpeg"]'::jsonb,
     '[{"icon":"📱","name":"iPhone","models":"iPhone 15, 15 Pro, 16, 16 Pro, 16e"},{"icon":"💻","name":"MacBook","models":"All USB-C MacBooks"},{"icon":"📱","name":"iPad","models":"iPad Pro, iPad Air, iPad Mini (USB-C)"},{"icon":"🎧","name":"AirPods","models":"AirPods Pro 2, AirPods 4 (USB-C)"}]'::jsonb,
     80,
     1,
+    true
+  ),
+  (
+    'samsung-usb-c-charger',
+    'Samsung USB-C Charger',
+    'Samsung USB-C Charger',
+    1899,
+    null,
+    null,
+    'Black Samsung USB-C charging adapter. Adapter only; the USB-C cable is sold separately. Ask us to confirm availability and compatibility with your Galaxy model before ordering.',
+    'Samsung USB-C Charger Pakistan',
+    'Explore the Samsung USB-C charger at Wirely. Contact us for pricing, availability and device compatibility.',
+    null,
+    null,
+    '["Adapter only — cable not included","USB-C charging connection","Two-pin round plug","Confirm your phone model before ordering"]'::jsonb,
+    '["/products/samsung-packaging-catalog-v2.png","/products/samsung-adapters-gallery.png"]'::jsonb,
+    '[{"icon":"📱","name":"Samsung Galaxy","models":"Ask us to confirm support for your exact model."}]'::jsonb,
+    0,
+    2,
     true
   ),
   (
@@ -72,10 +91,10 @@ values
     null,
     null,
     '["Active Noise Cancellation & Adaptive Transparency","H2 chip — smarter audio processing","Personalised Spatial Audio with head tracking","Up to 6hrs listening / 30hrs with case","Touch control + swipe volume on stem","MagSafe & USB-C charging case (IP54)"]'::jsonb,
-    '["/products/airpods-pro-2.webp"]'::jsonb,
+    '["/products/airpods-pro-2.jpeg","/products/airpods-pro-2-alt.jpeg"]'::jsonb,
     '[{"icon":"📱","name":"iPhone","models":"iPhone 6s and later"},{"icon":"📱","name":"iPad","models":"iPad (5th gen+), iPad Air, iPad Pro"},{"icon":"💻","name":"Mac","models":"MacBook, iMac, Mac Mini (macOS 12.4+)"},{"icon":"⌚","name":"Apple Watch","models":"All Apple Watch models"}]'::jsonb,
     40,
-    2,
+    3,
     true
   ),
   (
@@ -91,10 +110,10 @@ values
     null,
     null,
     '["Active Noise Cancellation in open-ear design","H2 chip for powerful computational audio","Personalised Spatial Audio","Up to 30 hours total with wireless charging case","USB-C + wireless (Qi/MagSafe) charging","IP54 dust & water resistance"]'::jsonb,
-    '["/products/airpods-4.webp"]'::jsonb,
+    '["/products/airpods-4.jpeg","/products/airpods-4-alt.jpeg"]'::jsonb,
     '[{"icon":"📱","name":"iPhone","models":"iPhone 6s and later"},{"icon":"📱","name":"iPad","models":"iPad (5th gen+), iPad Air, iPad Pro"},{"icon":"💻","name":"Mac","models":"MacBook, iMac, Mac Mini (macOS 12.4+)"},{"icon":"⌚","name":"Apple Watch","models":"All Apple Watch models"}]'::jsonb,
     40,
-    3,
+    4,
     true
   ),
   (
@@ -110,10 +129,13 @@ values
     null,
     null,
     '["Complete charging solution in one box","40W adapter + 60W USB-C cable","Fast charge iPhone 15/16 to 50% in ~30 mins","Perfect for MacBook Air fast charging","Ideal gift set or upgrade kit"]'::jsonb,
-    '["/products/combo-charger-cable.webp"]'::jsonb,
+    '["/products/40w-cable.jpeg","/products/40w-charger.jpeg","/products/usb-c-cable-detail.png"]'::jsonb,
     '[{"icon":"📱","name":"iPhone","models":"iPhone 15, 15 Pro, 16, 16 Pro, 16e"},{"icon":"💻","name":"MacBook","models":"MacBook Air M1/M2/M3"},{"icon":"📱","name":"iPad","models":"iPad Pro, iPad Air (USB-C)"},{"icon":"🎧","name":"AirPods","models":"AirPods Pro 2, AirPods 4 (USB-C)"}]'::jsonb,
     30,
-    4,
+    5,
     true
   )
 on conflict (slug) do nothing;
+
+-- Quick check (should return 6 rows):
+-- select slug, short_name, price from public.products order by sort_order;

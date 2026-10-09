@@ -66,28 +66,36 @@ export default function AdminLoginPage() {
     <div className="mx-auto max-w-md rounded-3xl border border-border bg-card p-8">
       <h1 className="font-display text-2xl font-bold">Admin login</h1>
       <p className="mt-2 text-sm text-muted">
-        Use the email/password from Supabase Authentication → Users. After first
-        login works, set that user&apos;s{" "}
-        <code className="rounded bg-background px-1">profiles.role</code> to{" "}
-        <code className="rounded bg-background px-1">admin</code>.
+        Sign in with the <strong>email address</strong> of a user you created in
+        Supabase → Authentication → Users (not the word &quot;admin&quot;). That
+        user must have{" "}
+        <code className="rounded bg-background px-1">profiles.role</code> ={" "}
+        <code className="rounded bg-background px-1">admin</code> in the database
+        to save products.
       </p>
       <form onSubmit={onSubmit} className="mt-6 space-y-3">
-        <input
+        <label className="block text-sm">
+          Email address
+          <input
           name="email"
           type="email"
           required
           autoComplete="username"
-          placeholder="Email"
-          className="w-full rounded-xl border border-border bg-background px-3 py-2.5"
+          placeholder="you@example.com"
+          className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5"
         />
-        <input
+        </label>
+        <label className="block text-sm">
+          Password
+          <input
           name="password"
           type="password"
           required
           autoComplete="current-password"
-          placeholder="Password"
-          className="w-full rounded-xl border border-border bg-background px-3 py-2.5"
+          placeholder="Password from Supabase"
+          className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5"
         />
+        </label>
         {error && <p className="text-sm text-danger">{error}</p>}
         <button type="submit" className="btn-primary w-full" disabled={pending}>
           {pending ? "Signing in…" : "Sign in"}
