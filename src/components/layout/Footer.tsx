@@ -11,9 +11,9 @@ export function Footer() {
           <Image
             src="/brand/footer-logo.png"
             alt="Wirely"
-            width={160}
-            height={48}
-            className="mb-4 h-10 w-auto object-contain brightness-0 invert"
+            width={220}
+            height={220}
+            className="mb-4 h-28 w-28 rounded-2xl bg-[#f4efe6] object-contain"
           />
           <p className="max-w-sm text-sm leading-relaxed text-white/70">
             Everyday charging essentials and audio accessories, delivered across
@@ -39,6 +39,16 @@ export function Footer() {
             <li>
               <Link href="/returns" className="hover:text-white">
                 Returns
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacy" className="hover:text-white">
+                Privacy policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/terms" className="hover:text-white">
+                Terms and conditions
               </Link>
             </li>
           </ul>
