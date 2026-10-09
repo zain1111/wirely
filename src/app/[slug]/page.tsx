@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { ReviewSlider } from "@/components/home/ReviewSlider";
 import { ProductDetail } from "@/components/product/ProductDetail";
+import { reviewsForSlug } from "@/lib/customer-reviews";
 import { ReviewForm } from "@/components/product/ReviewForm";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
@@ -114,6 +116,11 @@ export default async function ProductPage({ params }: Props) {
     <>
       <JsonLd data={[productLd, breadcrumbLd]} />
       <ProductDetail product={product} related={related} />
+      <ReviewSlider
+        reviews={reviewsForSlug(product.slug)}
+        eyebrow="From customers"
+        title="Photos and messages after delivery"
+      />
       <div className="container-wirely pb-24 md:pb-16">
         {reviews.length > 0 && (
           <section className="mb-8 space-y-3">
