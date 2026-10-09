@@ -284,6 +284,7 @@ export async function placeOrder(
   const publicNumber = formatPublicOrderNumber(order.order_number);
 
   const emailResult = await sendOrderEmails({
+    orderId: order.id,
     orderNumber: publicNumber,
     customerName: data.customerName,
     email: data.email,

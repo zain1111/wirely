@@ -21,6 +21,7 @@ export type OrderEmailPayload = {
   total: number;
   couponCode?: string | null;
   advancePaymentDiscountAmount?: number;
+  orderId?: string;
   items: {
     product_name: string;
     variation_label?: string | null;
@@ -45,7 +46,7 @@ function lineName(item: OrderEmailPayload["items"][number]): string {
 }
 
 function mailLogoUrl(): string {
-  return `${SITE_URL}/brand/logo.png`;
+  return `${SITE_URL}/brand/footer-logo.png`;
 }
 
 function whatsappDisplay(): string {
@@ -135,9 +136,7 @@ export function buildCustomerOrderEmail(order: OrderEmailPayload): {
   const {
     codFee,
     couponDiscountAmount,
-    advancePaymentDiscountAmount,
     showCouponDiscount,
-    showAdvanceDiscount,
     showCod,
     showBreakdown,
     subtotalBeforeDiscount,
@@ -148,9 +147,6 @@ export function buildCustomerOrderEmail(order: OrderEmailPayload): {
   const orderRows = buildOrderRowsHtml(order.items);
   const subtotalFormatted = escapeHtml(formatPkr(subtotalBeforeDiscount));
   const couponDiscountFormatted = escapeHtml(formatPkr(couponDiscountAmount));
-  const advanceDiscountFormatted = escapeHtml(
-    formatPkr(advancePaymentDiscountAmount),
-  );
   const couponLabel = escapeHtml(
     (order.couponCode ?? "").trim().toUpperCase(),
   );
@@ -160,25 +156,37 @@ export function buildCustomerOrderEmail(order: OrderEmailPayload): {
 
   const whatNextBullets =
     order.paymentMethod === "cod"
-      ? '<li style="margin-bottom:8px;"><strong>Cash on delivery:</strong> Delivery is free. Most orders arrive in <strong>2&ndash;4 days</strong>. Please keep the exact order total ready; payment is collected when your parcel arrives.</li>' +
-        '<li style="margin-bottom:8px;"><strong>We&rsquo;ll reach out:</strong> A representative may contact you to confirm your address and delivery.</li>' +
-        `<li style="margin-bottom:0;"><strong>WhatsApp:</strong> You can also message us on WhatsApp at <a href="tel:+${WHATSAPP_NUMBER.replace(/\D/g, "")}" style="color:#1a3a5c;font-weight:600;">${escapeHtml(waDisplay)}</a> &mdash; include the <strong>phone number you used on this order</strong> so we can match and confirm your order quickly.</li>`
-      : '<li style="margin-bottom:8px;"><strong>Advance payment:</strong> You received <strong>10% off</strong> for paying in advance. Your order will be processed after we receive payment.</li>' +
-        '<li style="margin-bottom:8px;"><strong>We&rsquo;ll reach out:</strong> A customer representative will contact you shortly to complete payment and confirm details.</li>' +
-        `<li style="margin-bottom:0;"><strong>WhatsApp:</strong> You can also message us on WhatsApp at <a href="tel:+${WHATSAPP_NUMBER.replace(/\D/g, "")}" style="color:#1a3a5c;font-weight:600;">${escapeHtml(waDisplay)}</a> &mdash; include the <strong>phone number you used on this order</strong> so we can match and confirm your order quickly.</li>`;
+      ? "<li style=\"margin-bottom:8px;\"><strong>Cash on delivery:</strong> Keep the order total ready. You pay the courier when the parcel arrives.</li>" +
+        "<li style=\"margin-bottom:0;\"><strong>Delivery:</strong> Most orders arrive in 2&ndash;4 working days after we confirm your address.</li>"
+      : "<li style=\"margin-bottom:8px;\"><strong>Advance payment:</strong> We will get back to you shortly with payment details before we confirm your order.</li>" +
+        "<li style=\"margin-bottom:0;\"><strong>Delivery:</strong> We dispatch after payment is received. Most orders then arrive in 2&ndash;4 working days.</li>";
 
   const html =
     '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"></head><body style="margin:0;padding:0;background:#f5f2eb;">' +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f5f2eb;padding:24px 12px;">' +
     '<tr><td align="center">' +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e8e4dc;box-shadow:0 4px 24px rgba(26,31,46,.06);">' +
-    '<tr><td style="padding:28px 28px 20px;text-align:center;background:linear-gradient(180deg,#faf8f4 0%,#ffffff 100%);">' +
-    `<img src="${logoUrl}" alt="${SITE_NAME}" width="160" height="auto" style="max-width:160px;height:auto;display:inline-block;border:0;" />` +
+    '<tr><td style="padding:22px 28px;background:#205088;text-align:left;">' +
+    `<img src="${logoUrl}" alt="${SITE_NAME}" width="72" height="72" style="width:72px;height:72px;border-radius:12px;border:0;display:block;background:#f4efe6;" />` +
+    `<p style="margin:14px 0 0;font-family:Inter,Segoe UI,sans-serif;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#d6e4f5;">Invoice</p>` +
+    `<p style="margin:4px 0 0;font-family:Inter,Segoe UI,sans-serif;font-size:22px;font-weight:700;color:#ffffff;">${escapeHtml(String(order.orderNumber))}</p>` +
     "</td></tr>" +
-    '<tr><td style="padding:0 28px 8px;font-family:Inter,Segoe UI,sans-serif;">' +
-    `<h1 style="margin:0 0 8px;font-size:22px;line-height:1.3;color:#1a3a5c;font-weight:700;">Thank you, ${escapeHtml(order.customerName)}!</h1>` +
-    `<p style="margin:0;font-size:15px;line-height:1.55;color:#5c6478;">We&rsquo;ve received your order <strong style="color:#1a3a5c;">#${escapeHtml(String(order.orderNumber))}</strong> and we&rsquo;re on it.</p>` +
+    '<tr><td style="padding:22px 28px 8px;font-family:Inter,Segoe UI,sans-serif;">' +
+    `<h1 style="margin:0 0 8px;font-size:22px;line-height:1.3;color:#163a66;font-weight:700;">Thank you, ${escapeHtml(order.customerName)}</h1>` +
+    `<p style="margin:0;font-size:15px;line-height:1.55;color:#5c6478;">This is your order invoice from ${SITE_NAME}.</p>` +
     "</td></tr>" +
+    '<tr><td style="padding:8px 28px 4px;font-family:Inter,Segoe UI,sans-serif;">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' +
+    "<tr>" +
+    '<td style="vertical-align:top;width:50%;padding-right:8px;">' +
+    '<p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8b9199;">Bill to</p>' +
+    `<p style="margin:0;font-size:14px;line-height:1.5;color:#1a1f2e;">${escapeHtml(order.customerName)}<br />${escapeHtml(order.email)}<br />${escapeHtml(order.phone)}</p>` +
+    "</td>" +
+    '<td style="vertical-align:top;width:50%;">' +
+    '<p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8b9199;">Deliver to</p>' +
+    `<p style="margin:0;font-size:14px;line-height:1.5;color:#1a1f2e;">${escapeHtml(order.address)}<br />${escapeHtml(order.city)}</p>` +
+    `<p style="margin:8px 0 0;font-size:13px;color:#5c6478;">Payment: ${order.paymentMethod === "cod" ? "Cash on delivery" : "Advance payment"}</p>` +
+    "</td></tr></table></td></tr>" +
     '<tr><td style="padding:16px 28px 8px;">' +
     '<p style="margin:0 0 10px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8b9199;font-family:Inter,Segoe UI,sans-serif;">Order summary</p>' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e4dc;border-radius:12px;overflow:hidden;">' +
@@ -192,9 +200,6 @@ export function buildCustomerOrderEmail(order: OrderEmailPayload): {
     (showBreakdown
       ? `<tr><td colspan="3" style="padding:14px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:14px;color:#5c6478;">Subtotal</td><td style="padding:14px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:14px;color:#1a1f2e;">${subtotalFormatted}</td></tr>`
       : "") +
-    (showAdvanceDiscount
-      ? `<tr><td colspan="3" style="padding:8px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:14px;color:#5c6478;">Advance payment (10% off)</td><td style="padding:8px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:14px;color:#166534;">&minus;${advanceDiscountFormatted}</td></tr>`
-      : "") +
     (showCouponDiscount
       ? `<tr><td colspan="3" style="padding:8px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:14px;color:#5c6478;">Discount (${couponLabel})</td><td style="padding:8px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:14px;color:#166534;">&minus;${couponDiscountFormatted}</td></tr>`
       : "") +
@@ -202,7 +207,7 @@ export function buildCustomerOrderEmail(order: OrderEmailPayload): {
       ? `<tr><td colspan="3" style="padding:8px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:14px;color:#5c6478;">Cash on delivery (per order)</td><td style="padding:8px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:14px;color:#1a1f2e;">+${codFormatted}</td></tr>`
       : "") +
     `<tr><td colspan="3" style="padding:14px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:14px;color:#5c6478;">${showBreakdown ? "Order total" : "Total"}</td>` +
-    `<td style="padding:14px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:18px;font-weight:700;color:#1a3a5c;">${totalFormatted}</td></tr>` +
+    `<td style="padding:14px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:18px;font-weight:700;color:#205088;">${totalFormatted}</td></tr>` +
     "</table>" +
     "</td></tr>" +
     '<tr><td style="padding:8px 28px 24px;">' +
@@ -213,7 +218,7 @@ export function buildCustomerOrderEmail(order: OrderEmailPayload): {
     whatNextBullets +
     "</ul>" +
     '<div style="margin-top:16px;text-align:center;">' +
-    `<a href="${escapeHtml(waLink)}" style="display:inline-block;background:#1a3a5c;color:#faf8f4 !important;text-decoration:none;font-weight:700;font-size:14px;padding:12px 22px;border-radius:999px;font-family:Inter,Segoe UI,sans-serif;">Message us on WhatsApp</a>` +
+    `<a href="${escapeHtml(waLink)}" style="display:inline-block;background:#205088;color:#ffffff !important;text-decoration:none;font-weight:700;font-size:14px;padding:12px 22px;border-radius:999px;font-family:Inter,Segoe UI,sans-serif;">WhatsApp ${escapeHtml(waDisplay)}</a>` +
     "</div>" +
     "</td></tr></table>" +
     "</td></tr>" +
@@ -228,11 +233,6 @@ export function buildCustomerOrderEmail(order: OrderEmailPayload): {
   const totalsPlainBlock: string[] = [];
   if (showBreakdown) {
     totalsPlainBlock.push(`Subtotal: ${formatPkr(subtotalBeforeDiscount)}`);
-  }
-  if (showAdvanceDiscount) {
-    totalsPlainBlock.push(
-      `Advance payment (10% off): -${formatPkr(advancePaymentDiscountAmount)}`,
-    );
   }
   if (showCouponDiscount) {
     totalsPlainBlock.push(
@@ -261,8 +261,8 @@ export function buildCustomerOrderEmail(order: OrderEmailPayload): {
     ...totalsPlainBlock,
     "WHAT HAPPENS NEXT",
     order.paymentMethod === "cod"
-      ? "- Free delivery; most orders arrive in 2–4 days. Pay when your order arrives."
-      : "- You saved 10% with advance payment. We will contact you with payment details.",
+      ? "- Cash on delivery. Pay the courier the order total when it arrives."
+      : "- Advance payment. We will contact you with payment details before we confirm your order.",
     "- A customer representative may contact you to confirm details and delivery.",
     `- Or message us on WhatsApp: ${waDisplay} (include the phone number you used on this order so we can match it).`,
     "",
@@ -274,7 +274,7 @@ export function buildCustomerOrderEmail(order: OrderEmailPayload): {
   ].join("\n");
 
   return {
-    subject: `We received your order #${order.orderNumber} — ${SITE_NAME}`,
+    subject: `Invoice ${order.orderNumber} — ${SITE_NAME}`,
     html,
     text,
   };
@@ -320,11 +320,13 @@ export function buildAdminOrderEmail(order: OrderEmailPayload): {
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="padding:20px;">' +
     '<tr><td align="center">' +
     '<table role="presentation" width="600" style="max-width:600px;background:#fff;border-radius:12px;border:1px solid #ddd;overflow:hidden;">' +
-    '<tr><td style="padding:20px 24px;background:#1a3a5c;text-align:center;">' +
-    `<img src="${logoUrl}" alt="${SITE_NAME}" width="140" style="max-width:140px;height:auto;border:0;" />` +
+    '<tr><td style="padding:22px 24px;background:#205088;">' +
+    `<p style="margin:0;font-family:Inter,Segoe UI,sans-serif;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#d6e4f5;">New order</p>` +
+    `<h2 style="margin:6px 0 0;font-family:Inter,Segoe UI,sans-serif;font-size:22px;color:#ffffff;">${escapeHtml(String(order.orderNumber))}</h2>` +
+    `<p style="margin:8px 0 0;font-family:Inter,Segoe UI,sans-serif;font-size:16px;font-weight:700;color:#ffffff;">${totalFormatted}</p>` +
     "</td></tr>" +
     '<tr><td style="padding:24px;font-family:Inter,Segoe UI,sans-serif;">' +
-    `<h2 style="margin:0 0 16px;font-size:18px;color:#1a1f2e;">New order #${escapeHtml(String(order.orderNumber))}</h2>` +
+    '<p style="margin:0 0 16px;font-size:15px;color:#1a1f2e;">A customer just placed an order. Details are below.</p>' +
     '<table style="width:100%;font-size:14px;color:#333;line-height:1.6;">' +
     `<tr><td style="padding:4px 0;width:120px;"><strong>Customer</strong></td><td>${escapeHtml(order.customerName)}</td></tr>` +
     `<tr><td style="padding:4px 0;"><strong>Email</strong></td><td><a href="mailto:${escapeHtml(order.email)}">${escapeHtml(order.email)}</a></td></tr>` +
@@ -343,11 +345,11 @@ export function buildAdminOrderEmail(order: OrderEmailPayload): {
     (showCod
       ? `<tr><td style="padding:4px 0;"><strong>COD fee</strong></td><td>${codFormatted}</td></tr>`
       : "") +
-    `<tr><td style="padding:4px 0;"><strong>${showBreakdown ? "Order total" : "Total"}</strong></td><td style="font-size:18px;font-weight:700;color:#1a3a5c;">${totalFormatted}</td></tr>` +
+    `<tr><td style="padding:4px 0;"><strong>${showBreakdown ? "Order total" : "Total"}</strong></td><td style="font-size:18px;font-weight:700;color:#205088;">${totalFormatted}</td></tr>` +
     "</table>" +
     '<p style="margin:20px 0 8px;font-size:13px;font-weight:700;color:#555;">Line items</p>' +
     `<div style="background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:12px 14px;font-size:14px;color:#333;line-height:1.7;">${adminLinesText}</div>` +
-    '<p style="margin:20px 0 0;font-size:12px;color:#888;">Open the admin panel to update status and fulfil this order.</p>' +
+    `<p style="margin:20px 0 0;"><a href="${escapeHtml(SITE_URL + (order.orderId ? `/admin/orders/${order.orderId}` : "/admin/orders"))}" style="display:inline-block;background:#205088;color:#ffffff !important;text-decoration:none;font-weight:700;font-size:14px;padding:12px 18px;border-radius:999px;">Open this order</a></p>` +
     "</td></tr></table>" +
     "</td></tr></table></body></html>";
 
@@ -397,8 +399,19 @@ export function buildAdminOrderEmail(order: OrderEmailPayload): {
   };
 }
 
+const ADMIN_INBOX = "zainazeem2010@gmail.com";
+
+function adminRecipients(): string[] {
+  const configured = (process.env.ORDER_ADMIN_EMAIL || ORDER_ADMIN_EMAIL || "")
+    .trim()
+    .toLowerCase();
+  const recipients = new Set<string>([ADMIN_INBOX]);
+  if (configured.includes("@")) recipients.add(configured);
+  return [...recipients];
+}
+
 async function sendViaResend(payload: {
-  to: string;
+  to: string | string[];
   subject: string;
   html: string;
   text: string;
@@ -411,7 +424,7 @@ async function sendViaResend(payload: {
 
   const body: Record<string, unknown> = {
     from: `${SITE_NAME} <${ORDER_FROM_EMAIL}>`,
-    to: [payload.to],
+    to: Array.isArray(payload.to) ? payload.to : [payload.to],
     subject: payload.subject,
     html: payload.html,
     text: payload.text,
@@ -440,7 +453,7 @@ async function sendViaResend(payload: {
 export async function sendOrderEmails(
   order: OrderEmailPayload,
 ): Promise<{ sent: boolean; error?: string }> {
-  const admin = ORDER_ADMIN_EMAIL.trim();
+  const admin = adminRecipients();
   const customerEmail = order.email.trim();
 
   const apiKey = process.env.RESEND_API_KEY?.trim() || "";
@@ -457,17 +470,19 @@ export async function sendOrderEmails(
   const customerMail = buildCustomerOrderEmail(order);
 
   try {
-    if (admin) {
-      const adminResult = await sendViaResend({
-        to: admin,
-        subject: adminMail.subject,
-        html: adminMail.html,
-        text: adminMail.text,
-        replyTo: customerEmail,
-      });
-      if (!adminResult.ok) {
-        console.error("[email] admin send failed:", adminResult.error);
-      }
+    const adminResult = await sendViaResend({
+      to: admin,
+      subject: adminMail.subject,
+      html: adminMail.html,
+      text: adminMail.text,
+      replyTo: customerEmail,
+    });
+    if (!adminResult.ok) {
+      console.error(
+        "[email] admin send failed for",
+        admin.join(", "),
+        adminResult.error,
+      );
     }
 
     const customerResult = await sendViaResend({
