@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin-auth";
@@ -18,6 +19,7 @@ const productSchema = z.object({
   stock: z.number().int().min(0).default(0),
   sort_order: z.number().int().default(0),
   is_active: z.boolean().default(true),
+  purchase_mode: z.enum(["checkout", "enquiry"]).default("checkout"),
 });
 
 export async function POST(request: Request) {
@@ -54,11 +56,24 @@ export async function POST(request: Request) {
       );
     }
 
+    function refreshStorefront(slug: string) {
+      revalidatePath("/");
+      revalidatePath("/shop");
+      revalidatePath(`/${slug}`);
+    }
+
     if (id) {
+      const { data: existing } = await db
+        .from("products")
+        .select("slug")
+        .eq("id", id)
+        .maybeSingle();
       const { error } = await db.from("products").update(payload).eq("id", id);
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
+      if (existing?.slug) refreshStorefront(String(existing.slug));
+      if (existing?.slug !== payload.slug) refreshStorefront(payload.slug);
       return NextResponse.json({ ok: true, id });
     }
 
@@ -72,6 +87,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    refreshStorefront(payload.slug);
     return NextResponse.json({ ok: true, id: data.id });
   } catch {
     return NextResponse.json(

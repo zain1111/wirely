@@ -1,11 +1,12 @@
--- Run once in Supabase → SQL Editor
--- Change the email below to the account you use at /admin/login
+-- Run AFTER 011_fix_profiles_role_check.sql if you hit profiles_role_check errors
+-- Change the email below to match /admin/login
 
 insert into public.profiles (id, role)
 select u.id, 'user'
 from auth.users u
 left join public.profiles p on p.id = u.id
-where p.id is null;
+where p.id is null
+on conflict (id) do nothing;
 
 update public.profiles
 set role = 'admin'

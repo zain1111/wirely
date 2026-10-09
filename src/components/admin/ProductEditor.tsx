@@ -113,6 +113,8 @@ export function ProductEditor({
       stock: Number(form.get("stock") || 0),
       sort_order: Number(form.get("sort_order") || 0),
       is_active: form.get("is_active") === "on",
+      purchase_mode:
+        form.get("purchase_mode") === "enquiry" ? "enquiry" : "checkout",
     };
 
     try {
@@ -207,13 +209,24 @@ export function ProductEditor({
           type="number"
           defaultValue={product?.sort_order ?? 0}
         />
+        <label className="block text-sm md:col-span-2">
+          Storefront mode
+          <select
+            name="purchase_mode"
+            defaultValue={product?.purchase_mode ?? "checkout"}
+            className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2"
+          >
+            <option value="checkout">Checkout — buy when stock &gt; 0</option>
+            <option value="enquiry">Enquiry only — WhatsApp, ignores stock</option>
+          </select>
+        </label>
         <label className="flex items-center gap-2 text-sm md:col-span-2">
           <input
             name="is_active"
             type="checkbox"
             defaultChecked={product?.is_active ?? true}
           />
-          Active
+          Active (visible on shop)
         </label>
         <label className="block text-sm md:col-span-2">
           Description
