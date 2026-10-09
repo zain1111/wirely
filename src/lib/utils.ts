@@ -10,6 +10,15 @@ export function formatPkr(amount: number): string {
   return `Rs ${Math.round(amount).toLocaleString("en-PK")}`;
 }
 
+/** Customer-facing code. Hides the small database sequence (2 → WL-35670002). */
+export function formatPublicOrderNumber(orderNumber: number | string): string {
+  const raw = String(orderNumber).trim();
+  if (raw.startsWith("WL-")) return raw;
+  const n = Math.abs(parseInt(raw, 10) || 0);
+  const extra = (n * 7919 + 104729) % 9000;
+  return `WL-${String(extra).padStart(4, "0")}${String(n).padStart(4, "0")}`;
+}
+
 export function whatsappUrl(message: string): string {
   const text = encodeURIComponent(message);
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`;

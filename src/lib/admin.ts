@@ -97,6 +97,17 @@ export async function getAdminProducts(): Promise<Product[]> {
   }
 }
 
+export async function getAdminOrder(id: string): Promise<Order | null> {
+  if (!hasServiceRole()) return null;
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("orders")
+    .select("*, order_items(*)")
+    .eq("id", id)
+    .maybeSingle();
+  return (data as Order | null) ?? null;
+}
+
 export async function getAdminOrders(): Promise<Order[]> {
   if (!hasServiceRole()) return [];
   const supabase = createServiceClient();

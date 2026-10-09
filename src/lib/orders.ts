@@ -5,6 +5,7 @@ import { computeDiscount, normalizeCouponCode } from "@/lib/coupons";
 import { sendOrderEmails } from "@/lib/email";
 import { mapProductRow } from "@/lib/products";
 import { resolveUnitPrice } from "@/lib/pricing";
+import { formatPublicOrderNumber } from "@/lib/utils";
 import { hasServiceRole } from "@/lib/supabase/env";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Coupon, Product } from "@/lib/types";
@@ -280,8 +281,10 @@ export async function placeOrder(
     }
   }
 
+  const publicNumber = formatPublicOrderNumber(order.order_number);
+
   const emailResult = await sendOrderEmails({
-    orderNumber: order.order_number,
+    orderNumber: publicNumber,
     customerName: data.customerName,
     email: data.email,
     phone: data.phone,
@@ -306,7 +309,7 @@ export async function placeOrder(
   return {
     ok: true,
     orderId: order.id,
-    orderNumber: order.order_number,
+    orderNumber: publicNumber,
     total,
     paymentMethod: data.paymentMethod,
     email: data.email,

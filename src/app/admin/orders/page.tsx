@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { OrderStatusSelect } from "@/components/admin/OrderStatusSelect";
 import { getAdminOrders } from "@/lib/admin";
-import { formatPkr } from "@/lib/utils";
+import { formatPkr, formatPublicOrderNumber } from "@/lib/utils";
 
 export default async function AdminOrdersPage() {
   const orders = await getAdminOrders();
@@ -23,13 +24,19 @@ export default async function AdminOrdersPage() {
                 <th className="px-4 py-3">Payment</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Date</th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
               {orders.map((order) => (
                 <tr key={order.id} className="border-b border-border last:border-0">
                   <td className="px-4 py-3 font-semibold">
-                    #{order.order_number}
+                    <Link
+                      href={`/admin/orders/${order.id}`}
+                      className="text-accent underline"
+                    >
+                      {formatPublicOrderNumber(order.order_number)}
+                    </Link>
                   </td>
                   <td className="px-4 py-3">
                     <p>{order.customer_name}</p>
@@ -47,6 +54,14 @@ export default async function AdminOrdersPage() {
                   </td>
                   <td className="px-4 py-3 text-xs text-muted">
                     {new Date(order.created_at).toLocaleString("en-PK")}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Link
+                      href={`/admin/orders/${order.id}`}
+                      className="text-accent underline"
+                    >
+                      Details
+                    </Link>
                   </td>
                 </tr>
               ))}
