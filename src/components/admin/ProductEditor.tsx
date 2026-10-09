@@ -25,6 +25,17 @@ export function ProductEditor({
   const [images, setImages] = useState<string[]>(product?.images ?? []);
   const [urlDraft, setUrlDraft] = useState("");
   const [slugDraft, setSlugDraft] = useState(product?.slug ?? "");
+  const [variations, setVariations] = useState<
+    { id?: string; label: string; price: string; stock: string }[]
+  >(
+    (product?.variations ?? []).map((item) => ({
+      id: item.id,
+      label: item.label,
+      price: String(item.price),
+      stock: String(item.stock),
+    })),
+  );
+  const [colorDraft, setColorDraft] = useState("");
   const isNew = !product;
 
   async function handleFiles(files: FileList | null) {
@@ -115,6 +126,14 @@ export function ProductEditor({
       is_active: form.get("is_active") === "on",
       purchase_mode:
         form.get("purchase_mode") === "enquiry" ? "enquiry" : "checkout",
+      variations: variations
+        .map((item) => ({
+          id: item.id,
+          label: item.label.trim(),
+          price: Number(item.price || form.get("price") || 0),
+          stock: Number(item.stock || 0),
+        }))
+        .filter((item) => item.label),
     };
 
     try {
@@ -397,6 +416,119 @@ export function ProductEditor({
             className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2"
           />
         </label>
+      </div>
+
+      <div className="rounded-2xl border border-border p-4">
+        <p className="text-sm font-semibold">Colors / variations</p>
+        <p className="mt-1 text-xs text-muted">
+          Add a color such as White or Black. Each color has its own price and stock.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {["White", "Black"].map((color) => (
+            <button
+              key={color}
+              type="button"
+              className="btn-secondary px-3 py-1.5 text-sm"
+              onClick={() => {
+                setVariations((current) =>
+                  current.some(
+                    (item) => item.label.toLowerCase() === color.toLowerCase(),
+                  )
+                    ? current
+                    : [
+                        ...current,
+                        {
+                          label: color,
+                          price: String(product?.price ?? ""),
+                          stock: "0",
+                        },
+                      ],
+                );
+              }}
+            >
+              Add {color}
+            </button>
+          ))}
+        </div>
+        <div className="mt-3 flex gap-2">
+          <input
+            value={colorDraft}
+            onChange={(e) => setColorDraft(e.target.value)}
+            placeholder="Other color"
+            className="min-w-0 flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm"
+          />
+          <button
+            type="button"
+            className="btn-secondary px-4 py-2 text-sm"
+            onClick={() => {
+              const label = colorDraft.trim();
+              if (!label) return;
+              setVariations((current) => [
+                ...current,
+                { label, price: String(product?.price ?? ""), stock: "0" },
+              ]);
+              setColorDraft("");
+            }}
+          >
+            Add
+          </button>
+        </div>
+        {variations.length > 0 && (
+          <ul className="mt-4 space-y-2">
+            {variations.map((item, index) => (
+              <li key={item.id ?? `${item.label}-${index}`} className="grid gap-2 sm:grid-cols-[1fr_120px_100px_auto]">
+                <input
+                  value={item.label}
+                  onChange={(e) =>
+                    setVariations((current) =>
+                      current.map((row, rowIndex) =>
+                        rowIndex === index ? { ...row, label: e.target.value } : row,
+                      ),
+                    )
+                  }
+                  className="rounded-xl border border-border bg-background px-3 py-2 text-sm"
+                />
+                <input
+                  type="number"
+                  value={item.price}
+                  onChange={(e) =>
+                    setVariations((current) =>
+                      current.map((row, rowIndex) =>
+                        rowIndex === index ? { ...row, price: e.target.value } : row,
+                      ),
+                    )
+                  }
+                  placeholder="Price"
+                  className="rounded-xl border border-border bg-background px-3 py-2 text-sm"
+                />
+                <input
+                  type="number"
+                  value={item.stock}
+                  onChange={(e) =>
+                    setVariations((current) =>
+                      current.map((row, rowIndex) =>
+                        rowIndex === index ? { ...row, stock: e.target.value } : row,
+                      ),
+                    )
+                  }
+                  placeholder="Stock"
+                  className="rounded-xl border border-border bg-background px-3 py-2 text-sm"
+                />
+                <button
+                  type="button"
+                  className="text-sm text-danger"
+                  onClick={() =>
+                    setVariations((current) =>
+                      current.filter((_, rowIndex) => rowIndex !== index),
+                    )
+                  }
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}

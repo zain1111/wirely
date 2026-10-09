@@ -20,6 +20,17 @@ const productSchema = z.object({
   sort_order: z.number().int().default(0),
   is_active: z.boolean().default(true),
   purchase_mode: z.enum(["checkout", "enquiry"]).default("checkout"),
+  variations: z
+    .array(
+      z.object({
+        id: z.string().uuid().optional(),
+        label: z.string().min(1).max(80),
+        price: z.number().int().min(0),
+        stock: z.number().int().min(0),
+      }),
+    )
+    .optional()
+    .default([]),
 });
 
 export async function POST(request: Request) {
@@ -41,7 +52,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const { id, purchase_mode: _purchaseMode, slug, ...payloadBase } = parsed.data;
+    const {
+      id,
+      purchase_mode: _purchaseMode,
+      slug,
+      variations,
+      ...payloadBase
+    } = parsed.data;
     // Omit purchase_mode until migration 012 is applied — otherwise PostgREST
     // rejects the entire update ("column not in schema cache") and stock is not saved.
     let payload: Record<string, unknown> = { ...payloadBase, slug };
@@ -84,6 +101,38 @@ export async function POST(request: Request) {
       );
     }
 
+    async function syncVariations(productId: string) {
+      const { data: existing } = await db
+        .from("product_variations")
+        .select("id")
+        .eq("product_id", productId);
+      const keep = new Set(
+        variations.map((item) => item.id).filter((value): value is string => Boolean(value)),
+      );
+      const remove = (existing ?? [])
+        .map((row) => String(row.id))
+        .filter((rowId) => !keep.has(rowId));
+      if (remove.length) {
+        const { error } = await db.from("product_variations").delete().in("id", remove);
+        if (error) return error.message;
+      }
+      for (const [index, item] of variations.entries()) {
+        const row = {
+          product_id: productId,
+          label: item.label.trim(),
+          price: item.price,
+          stock: item.stock,
+          sort_order: index,
+          is_active: true,
+        };
+        const result = item.id
+          ? await db.from("product_variations").update(row).eq("id", item.id)
+          : await db.from("product_variations").insert(row);
+        if (result.error) return result.error.message;
+      }
+      return null;
+    }
+
     function refreshStorefront(slug: string) {
       revalidatePath("/");
       revalidatePath("/shop");
@@ -115,6 +164,10 @@ export async function POST(request: Request) {
         );
       }
 
+      const variationError = await syncVariations(id);
+      if (variationError) {
+        return NextResponse.json({ error: variationError }, { status: 500 });
+      }
       if (existing?.slug) refreshStorefront(String(existing.slug));
       if (existing?.slug !== slug) refreshStorefront(slug);
       return NextResponse.json({ ok: true, id, stock: updated.stock });
@@ -142,6 +195,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    const variationError = await syncVariations(data.id);
+    if (variationError) {
+      return NextResponse.json({ error: variationError }, { status: 500 });
+    }
     refreshStorefront(slug);
     return NextResponse.json({ ok: true, id: data.id });
   } catch {

@@ -14,6 +14,23 @@ import { formatPkr, productImageSrc, whatsappUrl } from "@/lib/utils";
 import { useCart } from "@/store/cart";
 import { COD_FEE_PKR } from "@/lib/constants";
 
+const COLOR_SWATCHES: Record<string, string> = {
+  white: "#f4f4f4",
+  black: "#1a1a1a",
+  blue: "#205088",
+  grey: "#9ca3af",
+  gray: "#9ca3af",
+  silver: "#d1d5db",
+  gold: "#d4a017",
+  pink: "#f4b6c2",
+  green: "#3f7d4e",
+  red: "#c2413a",
+};
+
+function colorSwatch(label: string): string {
+  return COLOR_SWATCHES[label.trim().toLowerCase()] ?? "#d9dde3";
+}
+
 const trustRow = [
   { icon: Truck, label: "Free advance delivery" },
   { icon: RotateCcw, label: "7-day returns" },
@@ -183,7 +200,13 @@ export function ProductDetail({
 
           {variations.length > 0 && (
             <div className="mt-7">
-              <p className="mb-3 text-sm font-semibold">Options</p>
+              <p className="mb-3 text-sm font-semibold">
+                Color:{" "}
+                <span className="font-normal text-muted">
+                  {selectedVariation?.label}
+                  {selectedVariation ? ` · ${formatPkr(selectedVariation.price)}` : ""}
+                </span>
+              </p>
               <div className="flex flex-wrap gap-2">
                 {variations.map((v) => (
                   <button
@@ -191,13 +214,19 @@ export function ProductDetail({
                     type="button"
                     onClick={() => setVariationId(v.id)}
                     aria-pressed={variationId === v.id}
-                    className={`rounded-md border px-5 py-2.5 text-sm font-medium transition-all duration-200 ${
+                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition-all duration-200 ${
                       variationId === v.id
                         ? "ring-glow border-accent bg-accent-soft text-accent-dark"
                         : "border-border hover:border-accent/50"
                     }`}
                   >
-                    {v.label} · {formatPkr(v.price)}
+                    <span
+                      className="h-4 w-4 rounded-full border border-black/10"
+                      style={{ background: colorSwatch(v.label) }}
+                      aria-hidden
+                    />
+                    {v.label}
+                    {v.stock <= 0 ? " · Out of stock" : ""}
                   </button>
                 ))}
               </div>
