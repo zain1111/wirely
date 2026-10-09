@@ -1,6 +1,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+/** Always read fresh rows — a cached products list was showing old stock. */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const nav = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/products", label: "Products" },

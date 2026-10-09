@@ -443,9 +443,14 @@ export async function sendOrderEmails(
   const admin = ORDER_ADMIN_EMAIL.trim();
   const customerEmail = order.email.trim();
 
-  if (!process.env.RESEND_API_KEY) {
-    console.info("[email] RESEND_API_KEY missing — skipped sending");
-    return { sent: false, error: "Email not configured" };
+  const apiKey = process.env.RESEND_API_KEY?.trim() || "";
+  if (!apiKey || apiKey === "re_xxxx" || apiKey.includes("xxxx")) {
+    console.info("[email] RESEND_API_KEY is missing or still a placeholder");
+    return {
+      sent: false,
+      error:
+        "Email is not configured. Set a real RESEND_API_KEY and verify the sending domain.",
+    };
   }
 
   const adminMail = buildAdminOrderEmail(order);

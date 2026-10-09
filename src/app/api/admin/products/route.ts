@@ -87,6 +87,8 @@ export async function POST(request: Request) {
     function refreshStorefront(slug: string) {
       revalidatePath("/");
       revalidatePath("/shop");
+      revalidatePath("/admin");
+      revalidatePath("/admin/products");
       revalidatePath(`/${slug}`);
     }
 

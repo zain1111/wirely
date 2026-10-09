@@ -29,7 +29,10 @@ export default async function AdminReviewsPage() {
           </article>
         ))}
         {!reviews.length && (
-          <p className="text-sm text-muted">No reviews yet.</p>
+          <p className="text-sm text-muted">
+            No reviews yet. New submissions show up here as pending until you
+            approve them. Only approved reviews appear on the product page.
+          </p>
         )}
       </div>
     </div>

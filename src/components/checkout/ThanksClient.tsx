@@ -29,7 +29,7 @@ export function ThanksClient() {
 
       <div className="mx-auto mt-8 max-w-md rounded-2xl border border-border bg-card p-6 text-left">
         <p className="text-sm font-semibold text-foreground">
-          {emailSent ? "Confirmation email sent" : "Check your inbox"}
+          {emailSent ? "Confirmation email sent" : "Order saved"}
         </p>
         {email ? (
           <p className="mt-2 text-sm text-muted">
@@ -41,9 +41,11 @@ export function ThanksClient() {
               </>
             ) : (
               <>
-                We couldn&apos;t send email to{" "}
-                <strong className="text-foreground">{email}</strong> right now.
-                Our team will still follow up using your phone number.
+                Order <strong className="text-foreground">#{order}</strong> is
+                saved. We could not email{" "}
+                <strong className="text-foreground">{email}</strong> — the mail
+                service is not set up yet. We will contact you on the phone
+                number from checkout.
               </>
             )}
           </p>

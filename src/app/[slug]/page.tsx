@@ -5,6 +5,7 @@ import { ReviewForm } from "@/components/product/ReviewForm";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
 import { getProductBySlug, getProducts } from "@/lib/products";
+import { getApprovedReviews } from "@/lib/reviews";
 import { absoluteUrl, productImageSrc } from "@/lib/utils";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -66,6 +67,7 @@ export default async function ProductPage({ params }: Props) {
 
   const product = await getProductBySlug(slug);
   if (!product) notFound();
+  const reviews = await getApprovedReviews(product.slug);
 
   const all = await getProducts();
   const isCharging = /charger|cable/.test(product.slug);
@@ -113,6 +115,22 @@ export default async function ProductPage({ params }: Props) {
       <JsonLd data={[productLd, breadcrumbLd]} />
       <ProductDetail product={product} related={related} />
       <div className="container-wirely pb-24 md:pb-16">
+        {reviews.length > 0 && (
+          <section className="mb-8 space-y-3">
+            <h2 className="font-display text-2xl font-semibold">Reviews</h2>
+            {reviews.map((review) => (
+              <article
+                key={review.id}
+                className="rounded-3xl border border-border bg-card p-5"
+              >
+                <p className="font-semibold">
+                  {review.reviewer_name} · {review.rating}/5
+                </p>
+                <p className="mt-2 text-sm text-muted">{review.body}</p>
+              </article>
+            ))}
+          </section>
+        )}
         <ReviewForm productSlug={product.slug} />
       </div>
     </>
