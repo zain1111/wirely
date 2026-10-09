@@ -41,10 +41,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const { id, purchase_mode: _purchaseMode, ...payloadBase } = parsed.data;
+    const { id, purchase_mode: _purchaseMode, slug, ...payloadBase } = parsed.data;
     // Omit purchase_mode until migration 012 is applied — otherwise PostgREST
     // rejects the entire update ("column not in schema cache") and stock is not saved.
-    let payload: Record<string, unknown> = { ...payloadBase };
+    let payload: Record<string, unknown> = { ...payloadBase, slug };
     // Prefer service role for writes (reliable). Fall back to signed-in admin session + RLS.
     const db = admin.service ?? admin.session;
 
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
       }
 
       if (existing?.slug) refreshStorefront(String(existing.slug));
-      if (existing?.slug !== payload.slug) refreshStorefront(payload.slug);
+      if (existing?.slug !== slug) refreshStorefront(slug);
       return NextResponse.json({ ok: true, id, stock: updated.stock });
     }
 
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    refreshStorefront(payload.slug);
+    refreshStorefront(slug);
     return NextResponse.json({ ok: true, id: data.id });
   } catch {
     return NextResponse.json(
