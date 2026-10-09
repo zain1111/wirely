@@ -5,7 +5,7 @@ import { whatsappUrl } from "@/lib/utils";
 
 export function Footer() {
   return (
-    <footer className="mt-20 border-t border-border bg-graphite text-white">
+    <footer className="mt-16 border-t border-border bg-graphite text-white">
       <div className="container-wirely grid gap-10 py-14 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
           <Image
@@ -16,8 +16,8 @@ export function Footer() {
             className="mb-4 h-10 w-auto object-contain brightness-0 invert"
           />
           <p className="max-w-sm text-sm leading-relaxed text-white/70">
-            Wirely delivers authentic Apple chargers, cables, and AirPods across
-            Pakistan — with free delivery on advance orders and WhatsApp support.
+            Everyday charging essentials and audio accessories, delivered across
+            Pakistan. Find your fit, check the details, and ask us if you need a hand.
           </p>
         </div>
 

@@ -24,6 +24,7 @@ export type ProductVariation = {
 };
 
 export type Product = {
+  purchase_mode?: "checkout" | "enquiry";
   id: string;
   slug: string;
   name: string;

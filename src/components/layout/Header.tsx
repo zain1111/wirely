@@ -8,10 +8,10 @@ import { useCart } from "@/store/cart";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/shop", label: "Shop" },
-  { href: "/#why-us", label: "Why Us" },
-  { href: "/#reviews", label: "Reviews" },
-  { href: "/#faq", label: "FAQ" },
+  { href: "/shop?category=charging", label: "Chargers" },
+  { href: "/shop?category=cables", label: "Cables" },
+  { href: "/#find-your-fit", label: "Shop by device" },
+  { href: "/#faq", label: "Help & delivery" },
 ];
 
 export function Header() {
@@ -21,7 +21,7 @@ export function Header() {
   const itemCount = lines.reduce((sum, l) => sum + l.quantity, 0);
 
   return (
-    <header className="glass sticky top-0 z-40 border-b border-border/80">
+    <header className="sticky top-0 z-40 border-b border-border bg-white"><div className="bg-graphite px-4 py-2 text-center text-[10px] tracking-wide text-white sm:text-xs">Free delivery on advance orders <span className="mx-3 text-white/40">|</span> Cash on delivery available across Pakistan</div>
       <div className="container-wirely flex h-16 items-center justify-between gap-4 md:h-18">
         <Link href="/" className="flex items-center gap-2" aria-label="Wirely home">
           <Image
@@ -29,9 +29,9 @@ export function Header() {
             alt="Wirely"
             width={140}
             height={40}
-            className="h-9 w-auto object-contain"
-            priority
-          />
+            className="h-12 w-12 object-contain md:h-14 md:w-14"
+            priority />
+
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex" aria-label="Primary">
@@ -66,6 +66,7 @@ export function Header() {
             type="button"
             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card md:hidden"
             onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
             aria-label={open ? "Close menu" : "Open menu"}
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

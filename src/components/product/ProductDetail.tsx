@@ -5,18 +5,19 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { BadgeCheck, Check, RotateCcw, Truck } from "lucide-react";
+import { MessageCircle, Check, RotateCcw, Truck } from "lucide-react";
 import type { Product } from "@/lib/types";
 import { trackAddToCart, trackBeginCheckout } from "@/lib/analytics";
 import { ProductCard } from "@/components/product/ProductCard";
 import { resolveUnitPrice } from "@/lib/pricing";
-import { formatPkr, productImageSrc } from "@/lib/utils";
+import { formatPkr, productImageSrc, whatsappUrl } from "@/lib/utils";
 import { useCart } from "@/store/cart";
+import { COD_FEE_PKR } from "@/lib/constants";
 
 const trustRow = [
   { icon: Truck, label: "Free advance delivery" },
   { icon: RotateCcw, label: "7-day returns" },
-  { icon: BadgeCheck, label: "100% authentic" },
+  { icon: MessageCircle, label: "WhatsApp support" },
 ];
 
 export function ProductDetail({
@@ -38,13 +39,17 @@ export function ProductDetail({
     () => resolveUnitPrice(product, variationId),
     [product, variationId],
   );
-  const image = product.images[activeImage] || product.images[0];
+  const image = product.images[activeImage] || product.images[0] || "/brand/logo.png";
+  const selectedVariation = variations.find(v => v.id === variationId);
+  const enquiryOnly = product.purchase_mode === "enquiry";
+  const available = !enquiryOnly && (selectedVariation?.stock ?? product.stock) > 0;
   const saving =
     product.compare_at_price && product.compare_at_price > priced.price
       ? product.compare_at_price - priced.price
       : null;
 
   function addToCart(buyNow = false) {
+    if (!available) return;
     addItem({
       productSlug: product.slug,
       productName: product.name,
@@ -69,7 +74,7 @@ export function ProductDetail({
   }
 
   return (
-    <div className="container-wirely py-8 md:py-14">
+    <div className="container-wirely pb-24 pt-8 md:py-12">
       <nav className="mb-6 text-sm text-muted" aria-label="Breadcrumb">
         <Link href="/" className="transition-colors hover:text-foreground">
           Home
@@ -80,8 +85,8 @@ export function ProductDetail({
 
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
         {/* Gallery */}
-        <div className="lg:sticky lg:top-24 lg:self-start">
-          <div className="product-stage relative aspect-square overflow-hidden rounded-[2rem] border border-border">
+        <div className="lg:sticky lg:top-32 lg:self-start">
+          <div className="product-stage relative aspect-square overflow-hidden rounded-lg border border-border">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={image}
@@ -96,7 +101,7 @@ export function ProductDetail({
                   alt={product.name}
                   fill
                   priority
-                  className="object-cover"
+                  className="object-contain"
                   sizes="(max-width: 1024px) 100vw, 50vw"
                 />
               </motion.div>
@@ -116,8 +121,9 @@ export function ProductDetail({
                   key={src}
                   type="button"
                   onClick={() => setActiveImage(i)}
+                  aria-pressed={activeImage === i}
                   aria-label={`View image ${i + 1}`}
-                  className={`product-stage relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 transition-all duration-200 ${
+                  className={`product-stage relative h-20 w-20 shrink-0 overflow-hidden rounded-md border-2 transition-all duration-200 ${
                     i === activeImage
                       ? "ring-glow border-accent"
                       : "border-transparent opacity-70 hover:opacity-100"
@@ -127,7 +133,7 @@ export function ProductDetail({
                     src={productImageSrc(src)}
                     alt=""
                     fill
-                    className="object-cover"
+                    className="object-contain"
                     sizes="80px"
                   />
                 </button>
@@ -138,6 +144,7 @@ export function ProductDetail({
 
         {/* Buy panel */}
         <div>
+          <p className="eyebrow">WIRELY / EVERYDAY ESSENTIALS</p>
           {product.badge && (
             <motion.span
               initial={reduce ? false : { opacity: 0, y: 10 }}
@@ -171,7 +178,8 @@ export function ProductDetail({
             ) : null}
           </div>
 
-          <p className="mt-5 leading-relaxed text-muted">{product.description}</p>
+          <p className="mt-4 flex items-center gap-2 text-xs font-medium"><span className={`h-1.5 w-1.5 rounded-full ${available ? "bg-green-700" : "bg-muted"}`} />{enquiryOnly ? "Contact us to confirm availability" : available ? "Available to order" : "Currently out of stock"}</p>
+          <p className="mt-5 text-sm leading-relaxed text-muted">{product.description}</p>
 
           {variations.length > 0 && (
             <div className="mt-7">
@@ -182,7 +190,8 @@ export function ProductDetail({
                     key={v.id}
                     type="button"
                     onClick={() => setVariationId(v.id)}
-                    className={`rounded-full border px-5 py-2.5 text-sm font-medium transition-all duration-200 ${
+                    aria-pressed={variationId === v.id}
+                    className={`rounded-md border px-5 py-2.5 text-sm font-medium transition-all duration-200 ${
                       variationId === v.id
                         ? "ring-glow border-accent bg-accent-soft text-accent-dark"
                         : "border-border hover:border-accent/50"
@@ -206,23 +215,27 @@ export function ProductDetail({
             ))}
           </ul>
 
-          <div className="mt-8 hidden gap-3 md:flex">
+          {enquiryOnly && <a href={whatsappUrl(`Hi Wirely! Please confirm availability for ${product.name}. My phone model is:`)} className="btn-primary mt-8 w-full">Ask about availability</a>}
+          <div className={`mt-8 gap-3 ${enquiryOnly ? "hidden" : "hidden md:flex"}`}>
             <button
               type="button"
-              className="btn-primary flex-1 justify-center text-base"
+              disabled={!available}
+              className="btn-primary flex-1 justify-center text-base disabled:opacity-40 disabled:cursor-not-allowed"
               onClick={() => addToCart(true)}
             >
-              Buy now
+              {enquiryOnly ? "Price pending" : available ? "Buy now" : "Out of stock"}
             </button>
             <button
               type="button"
-              className="btn-secondary flex-1 justify-center text-base"
+              disabled={!available}
+              className="btn-secondary flex-1 justify-center text-base disabled:opacity-40 disabled:cursor-not-allowed"
               onClick={() => addToCart(false)}
             >
               Add to cart
             </button>
           </div>
 
+          <div className="purchase-note mt-5"><p className="font-semibold">Delivery & payment, made clear.</p><p className="mt-1 text-muted">Usually arrives in 2–4 working days after confirmation. Free delivery with advance payment; cash on delivery adds {formatPkr(COD_FEE_PKR)}.</p><Link href="/shipping" className="mt-2 inline-block underline underline-offset-4">See delivery details</Link><span className="mx-3 text-border">|</span><Link href="/returns" className="underline underline-offset-4">Return policy</Link></div>
           <div className="mt-6 flex flex-wrap gap-2">
             {trustRow.map(({ icon: Icon, label }) => (
               <span
@@ -235,16 +248,17 @@ export function ProductDetail({
             ))}
           </div>
 
+          <div className="product-details-section"><a className="flex items-center gap-2 text-sm font-semibold" href={whatsappUrl(`Hi Wirely! I have a question about ${product.name}. My phone model is:`)}><MessageCircle size={18} className="text-accent" />Not sure it fits? Ask us before you order.</a><p className="mt-2 text-xs leading-relaxed text-muted">Charging performance depends on your device, adapter and cable. Check the listed connectors and supported models.</p></div>
           {product.device_compatibility?.length > 0 && (
             <div className="mt-10">
               <h2 className="font-display text-xl font-semibold">
-                Compatibility
+                Will it work with your device?
               </h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {product.device_compatibility.map((d) => (
                   <div
                     key={d.name}
-                    className="rounded-2xl border border-border bg-card p-4 transition-colors hover:border-accent/40"
+                    className="rounded-md border border-border bg-card p-4 transition-colors hover:border-accent/40"
                   >
                     <p className="font-semibold">
                       <span className="mr-1.5">{d.icon}</span>
@@ -262,7 +276,7 @@ export function ProductDetail({
       {related.length > 0 && (
         <section className="mt-20">
           <h2 className="font-display text-2xl font-bold md:text-3xl">
-            You may also like
+            Complete your setup
           </h2>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((p, i) => (
@@ -273,7 +287,7 @@ export function ProductDetail({
       )}
 
       {/* Mobile sticky buy bar */}
-      <div className="glass fixed inset-x-0 bottom-0 z-30 border-t border-border p-3 md:hidden">
+      {!enquiryOnly && <div className="glass fixed inset-x-0 bottom-0 z-30 border-t border-border p-3 md:hidden">
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs text-muted">{product.short_name}</p>
@@ -281,20 +295,20 @@ export function ProductDetail({
           </div>
           <button
             type="button"
-            className="btn-secondary px-4 py-3 text-sm"
+            disabled={!available} className="btn-secondary px-4 py-3 text-sm disabled:opacity-40"
             onClick={() => addToCart(false)}
           >
             Add
           </button>
           <button
             type="button"
-            className="btn-primary px-5 py-3 text-sm"
+            disabled={!available} className="btn-primary px-5 py-3 text-sm disabled:opacity-40"
             onClick={() => addToCart(true)}
           >
-            Buy now
+            {enquiryOnly ? "Price pending" : available ? "Buy now" : "Out of stock"}
           </button>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

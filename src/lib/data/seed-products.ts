@@ -3,6 +3,28 @@ import type { Product } from "@/lib/types";
 /** Static catalog — edit this file to change products on the storefront. */
 export const SEED_PRODUCTS: Product[] = [
   {
+    id: "seed-samsung-charger",
+    slug: "samsung-usb-c-charger",
+    name: "Samsung USB-C Charger",
+    short_name: "Samsung USB-C Charger",
+    purchase_mode: "enquiry",
+    price: 1899,
+    compare_at_price: null,
+    badge: null,
+    description: "Black Samsung USB-C charging adapter. Adapter only; the USB-C cable is sold separately. Ask us to confirm availability and compatibility with your Galaxy model before ordering.",
+    meta_title: "Samsung USB-C Charger Pakistan",
+    meta_description: "Explore the Samsung USB-C charger at Wirely. Contact us for pricing, availability and device compatibility.",
+    video_url: null,
+    video_thumbnail: null,
+    highlights: ["Adapter only — cable not included", "USB-C charging connection", "Two-pin round plug", "Confirm your phone model before ordering"],
+    images: ["/products/samsung-packaging-catalog-v2.png", "/products/samsung-adapters-gallery.png"],
+    device_compatibility: [{icon: "📱", name: "Samsung Galaxy", models: "Ask us to confirm support for your exact model."}],
+    stock: 0,
+    sort_order: 2,
+    is_active: true,
+    variations: [],
+  },
+  {
     id: "seed-40w-charger",
     slug: "40w-charger",
     name: "40W Dynamic Power Adapter with 60W Max",
@@ -24,7 +46,7 @@ export const SEED_PRODUCTS: Product[] = [
       "Built-in safety: overheat, overcurrent, short-circuit protection",
       "Compatible with all USB-C devices",
     ],
-    images: ["/products/40w-charger.webp"],
+    images: ["/products/40w-charger.jpeg", "/products/40w-charger-alt.jpeg"],
     device_compatibility: [
       { icon: "📱", name: "iPhone", models: "iPhone 15, 15 Pro, 16, 16 Pro, 16e" },
       { icon: "💻", name: "MacBook", models: "MacBook Air M1/M2/M3" },
@@ -58,7 +80,7 @@ export const SEED_PRODUCTS: Product[] = [
       "Durable woven design for daily use",
       "Universal USB-C to USB-C compatibility",
     ],
-    images: ["/products/cable.webp"],
+    images: ["/products/usb-c-cable-detail.png", "/products/cable.jpeg"],
     device_compatibility: [
       { icon: "📱", name: "iPhone", models: "iPhone 15, 15 Pro, 16, 16 Pro, 16e" },
       { icon: "💻", name: "MacBook", models: "All USB-C MacBooks" },
@@ -93,7 +115,7 @@ export const SEED_PRODUCTS: Product[] = [
       "Touch control + swipe volume on stem",
       "MagSafe & USB-C charging case (IP54)",
     ],
-    images: ["/products/airpods-pro-2.webp"],
+    images: ["/products/airpods-pro-2.jpeg", "/products/airpods-pro-2-alt.jpeg"],
     device_compatibility: [
       { icon: "📱", name: "iPhone", models: "iPhone 6s and later" },
       { icon: "📱", name: "iPad", models: "iPad (5th gen+), iPad Air, iPad Pro" },
@@ -128,7 +150,7 @@ export const SEED_PRODUCTS: Product[] = [
       "USB-C + wireless (Qi/MagSafe) charging",
       "IP54 dust & water resistance",
     ],
-    images: ["/products/airpods-4.webp"],
+    images: ["/products/airpods-4.jpeg", "/products/airpods-4-alt.jpeg"],
     device_compatibility: [
       { icon: "📱", name: "iPhone", models: "iPhone 6s and later" },
       { icon: "📱", name: "iPad", models: "iPad (5th gen+), iPad Air, iPad Pro" },
@@ -162,7 +184,7 @@ export const SEED_PRODUCTS: Product[] = [
       "Perfect for MacBook Air fast charging",
       "Ideal gift set or upgrade kit",
     ],
-    images: ["/products/combo-charger-cable.webp"],
+    images: ["/products/40w-cable.jpeg", "/products/40w-charger.jpeg", "/products/usb-c-cable-detail.png"],
     device_compatibility: [
       { icon: "📱", name: "iPhone", models: "iPhone 15, 15 Pro, 16, 16 Pro, 16e" },
       { icon: "💻", name: "MacBook", models: "MacBook Air M1/M2/M3" },

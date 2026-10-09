@@ -68,7 +68,8 @@ export default async function ProductPage({ params }: Props) {
   if (!product) notFound();
 
   const all = await getProducts();
-  const related = all.filter((p) => p.slug !== product.slug).slice(0, 3);
+  const isCharging = /charger|cable/.test(product.slug);
+  const related = all.filter((p) => p.slug !== product.slug && (isCharging ? /charger|cable/.test(p.slug) : p.slug.includes("airpods"))).slice(0, 3);
 
   const productLd = {
     "@context": "https://schema.org",
@@ -78,7 +79,7 @@ export default async function ProductPage({ params }: Props) {
     image: product.images.map((src) => absoluteUrl(productImageSrc(src))),
     sku: product.slug,
     brand: { "@type": "Brand", name: SITE_NAME },
-    offers: {
+    offers: product.purchase_mode === "enquiry" ? undefined : {
       "@type": "Offer",
       url: `${SITE_URL}/${product.slug}`,
       priceCurrency: "PKR",
