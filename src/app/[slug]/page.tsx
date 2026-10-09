@@ -120,6 +120,7 @@ export default async function ProductPage({ params }: Props) {
         reviews={reviewsForSlug(product.slug)}
         eyebrow="From customers"
         title="Photos and messages after delivery"
+        layout="gallery"
       />
       <div className="container-wirely pb-24 md:pb-16">
         {reviews.length > 0 && (
