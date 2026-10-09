@@ -31,6 +31,9 @@ function colorSwatch(label: string): string {
   return COLOR_SWATCHES[label.trim().toLowerCase()] ?? "#d9dde3";
 }
 
+const SAMSUNG_COMPATIBILITY =
+  "Our charger is compatible with all Samsung devices, especially flagship phones.";
+
 const trustRow = [
   { icon: Truck, label: "Free advance delivery" },
   { icon: RotateCcw, label: "7-day returns" },
@@ -48,6 +51,28 @@ export function ProductDetail({
   const reduce = useReducedMotion();
   const addItem = useCart((s) => s.addItem);
   const variations = product.variations ?? [];
+  const isSamsungCharger = product.slug === "samsung-usb-c-charger";
+  const description = isSamsungCharger
+    ? product.description
+        .replace(
+          "Ask us to confirm availability and compatibility with your Galaxy model before ordering.",
+          SAMSUNG_COMPATIBILITY,
+        )
+        .replace(
+          "Ask us to confirm support for your exact model.",
+          SAMSUNG_COMPATIBILITY,
+        )
+    : product.description;
+  const highlights = product.highlights.map((item) =>
+    isSamsungCharger && /confirm your phone model/i.test(item)
+      ? SAMSUNG_COMPATIBILITY
+      : item,
+  );
+  const compatibility = (product.device_compatibility ?? []).map((item) =>
+    isSamsungCharger && /confirm support for your exact model/i.test(item.models)
+      ? { ...item, models: `${SAMSUNG_COMPATIBILITY}.` }
+      : item,
+  );
   const [variationId, setVariationId] = useState<string | null>(
     variations[0]?.id ?? null,
   );
@@ -196,7 +221,7 @@ export function ProductDetail({
           </div>
 
           <p className="mt-4 flex items-center gap-2 text-xs font-medium"><span className={`h-1.5 w-1.5 rounded-full ${available ? "bg-green-700" : "bg-muted"}`} />{enquiryOnly ? "Contact us to confirm availability" : available ? "Available to order" : "Currently out of stock"}</p>
-          <p className="mt-5 text-sm leading-relaxed text-muted">{product.description}</p>
+          <p className="mt-5 text-sm leading-relaxed text-muted">{description}</p>
 
           {variations.length > 0 && (
             <div className="mt-7">
@@ -234,7 +259,7 @@ export function ProductDetail({
           )}
 
           <ul className="mt-7 space-y-2.5">
-            {product.highlights.map((h) => (
+            {highlights.map((h) => (
               <li key={h} className="flex items-start gap-2.5 text-sm text-foreground">
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-dark">
                   <Check className="h-3 w-3" />
@@ -277,14 +302,16 @@ export function ProductDetail({
             ))}
           </div>
 
-          <div className="product-details-section"><a className="flex items-center gap-2 text-sm font-semibold" href={whatsappUrl(`Hi Wirely! I have a question about ${product.name}. My phone model is:`)}><MessageCircle size={18} className="text-accent" />Not sure it fits? Ask us before you order.</a><p className="mt-2 text-xs leading-relaxed text-muted">Charging performance depends on your device, adapter and cable. Check the listed connectors and supported models.</p></div>
-          {product.device_compatibility?.length > 0 && (
+          {!isSamsungCharger && (
+            <div className="product-details-section"><a className="flex items-center gap-2 text-sm font-semibold" href={whatsappUrl(`Hi Wirely! I have a question about ${product.name}. My phone model is:`)}><MessageCircle size={18} className="text-accent" />Not sure it fits? Ask us before you order.</a><p className="mt-2 text-xs leading-relaxed text-muted">Charging performance depends on your device, adapter and cable. Check the listed connectors and supported models.</p></div>
+          )}
+          {compatibility.length > 0 && (
             <div className="mt-10">
               <h2 className="font-display text-xl font-semibold">
                 Will it work with your device?
               </h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {product.device_compatibility.map((d) => (
+                {compatibility.map((d) => (
                   <div
                     key={d.name}
                     className="rounded-md border border-border bg-card p-4 transition-colors hover:border-accent/40"
