@@ -32,11 +32,17 @@ export async function requireAdmin() {
   }
 
   if (role !== "admin") {
+    const who = user.email ? ` (${user.email})` : "";
+    const profileHint = ownProfile
+      ? ` Your profile role is "${ownProfile.role}".`
+      : " No row in public.profiles for this user yet.";
     return {
       ok: false as const,
       status: 403,
       error:
-        "Forbidden — set profiles.role = 'admin' for your user in Supabase Table Editor.",
+        `Forbidden${who} — promote this account in Supabase SQL Editor` +
+        ` (update public.profiles set role = 'admin' where id matches auth.users).` +
+        profileHint,
     };
   }
 
