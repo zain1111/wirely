@@ -137,6 +137,8 @@ export function buildCustomerOrderEmail(order: OrderEmailPayload): {
     codFee,
     couponDiscountAmount,
     showCouponDiscount,
+    showAdvanceDiscount,
+    advancePaymentDiscountAmount,
     showCod,
     showBreakdown,
     subtotalBeforeDiscount,
@@ -147,6 +149,9 @@ export function buildCustomerOrderEmail(order: OrderEmailPayload): {
   const orderRows = buildOrderRowsHtml(order.items);
   const subtotalFormatted = escapeHtml(formatPkr(subtotalBeforeDiscount));
   const couponDiscountFormatted = escapeHtml(formatPkr(couponDiscountAmount));
+  const advanceDiscountFormatted = escapeHtml(
+    formatPkr(advancePaymentDiscountAmount),
+  );
   const couponLabel = escapeHtml(
     (order.couponCode ?? "").trim().toUpperCase(),
   );
@@ -200,6 +205,9 @@ export function buildCustomerOrderEmail(order: OrderEmailPayload): {
     (showBreakdown
       ? `<tr><td colspan="3" style="padding:14px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:14px;color:#5c6478;">Subtotal</td><td style="padding:14px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:14px;color:#1a1f2e;">${subtotalFormatted}</td></tr>`
       : "") +
+    (showAdvanceDiscount
+      ? `<tr><td colspan="3" style="padding:8px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:14px;color:#5c6478;">Advance payment (10% off)</td><td style="padding:8px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:14px;color:#166534;">&minus;${advanceDiscountFormatted}</td></tr>`
+      : "") +
     (showCouponDiscount
       ? `<tr><td colspan="3" style="padding:8px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:14px;color:#5c6478;">Discount (${couponLabel})</td><td style="padding:8px 12px;text-align:right;font-family:Inter,Segoe UI,sans-serif;font-size:14px;color:#166534;">&minus;${couponDiscountFormatted}</td></tr>`
       : "") +
@@ -233,6 +241,11 @@ export function buildCustomerOrderEmail(order: OrderEmailPayload): {
   const totalsPlainBlock: string[] = [];
   if (showBreakdown) {
     totalsPlainBlock.push(`Subtotal: ${formatPkr(subtotalBeforeDiscount)}`);
+  }
+  if (showAdvanceDiscount) {
+    totalsPlainBlock.push(
+      `Advance payment (10% off): -${formatPkr(advancePaymentDiscountAmount)}`,
+    );
   }
   if (showCouponDiscount) {
     totalsPlainBlock.push(

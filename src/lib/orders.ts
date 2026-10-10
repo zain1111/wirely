@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { deliveryFeePkr } from "@/lib/constants";
+import { advanceDiscountPkr, deliveryFeePkr } from "@/lib/constants";
 import { isPakistaniMobile } from "@/lib/phones";
 import { computeDiscount, normalizeCouponCode } from "@/lib/coupons";
 import { sendOrderEmails } from "@/lib/email";
@@ -200,8 +200,10 @@ export async function placeOrder(
     couponId = (coupon as Coupon).id;
   }
 
+  const advanceDiscount =
+    data.paymentMethod === "advance" ? advanceDiscountPkr(subtotal) : 0;
   const codFee = deliveryFeePkr(data.paymentMethod);
-  const total = Math.max(0, subtotal - discount + codFee);
+  const total = Math.max(0, subtotal - discount - advanceDiscount + codFee);
 
   const orderRow = {
     customer_name: data.customerName,
@@ -210,7 +212,7 @@ export async function placeOrder(
     address: data.address,
     city: data.city,
     subtotal_before_discount: subtotal,
-    discount_amount: discount,
+    discount_amount: discount + advanceDiscount,
     coupon_id: couponId,
     coupon_code: couponCode,
     payment_method: data.paymentMethod,
@@ -316,6 +318,7 @@ export async function placeOrder(
     paymentMethod: data.paymentMethod,
     codFee,
     discount,
+    advancePaymentDiscountAmount: advanceDiscount,
     subtotal,
     total,
     couponCode,

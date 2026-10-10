@@ -33,15 +33,18 @@ export const SITE_URL = normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
 export const WHATSAPP_NUMBER =
   process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "923431143434";
 
-export const COD_FEE_PKR = Number(process.env.NEXT_PUBLIC_COD_FEE_PKR || 299);
+export const COD_FEE_PKR = 0;
 
-/** `advance` (default): free on advance payment, COD fee applies. `all`: free on every order. */
-export const DELIVERY_MODE =
-  process.env.NEXT_PUBLIC_DELIVERY_MODE === "all" ? "all" : "advance";
+/** Pay-in-advance orders take this percent off the product subtotal. */
+export const ADVANCE_DISCOUNT_PERCENT = 10;
 
-export function deliveryFeePkr(method: "advance" | "cod"): number {
-  if (DELIVERY_MODE === "all") return 0;
-  return method === "cod" ? COD_FEE_PKR : 0;
+export function deliveryFeePkr(_method: "advance" | "cod"): number {
+  return 0;
+}
+
+export function advanceDiscountPkr(subtotal: number): number {
+  const base = Math.max(0, Math.round(subtotal));
+  return Math.round((base * ADVANCE_DISCOUNT_PERCENT) / 100);
 }
 
 function rs(amount: number): string {
@@ -49,13 +52,7 @@ function rs(amount: number): string {
 }
 
 export function deliverySummary(): string {
-  const advance = deliveryFeePkr("advance");
-  const cod = deliveryFeePkr("cod");
-  if (advance === 0 && cod === 0) return "Free delivery on every order.";
-  if (advance === 0) {
-    return `Free delivery on advance payment. Cash on delivery adds ${rs(cod)}.`;
-  }
-  return `Delivery is ${rs(advance)} on advance payment and ${rs(cod)} on cash on delivery.`;
+  return `Delivery is free. Pay in advance and get ${ADVANCE_DISCOUNT_PERCENT}% off.`;
 }
 
 /** Matches the published returns page. This is not a warranty term. */
@@ -85,7 +82,7 @@ export const TRUST_POINTS = [
   },
   {
     title: "Free Nationwide Delivery",
-    body: "Advance payment orders ship free across Pakistan in 2–4 days.",
+    body: `Delivery is free. Pay in advance and get ${ADVANCE_DISCOUNT_PERCENT}% off. Orders arrive in 2–4 days.`,
   },
   {
     title: "7-Day Easy Returns",

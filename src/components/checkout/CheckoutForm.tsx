@@ -5,7 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { readAttribution } from "@/lib/attribution";
-import { deliveryFeePkr, deliverySummary } from "@/lib/constants";
+import {
+  ADVANCE_DISCOUNT_PERCENT,
+  advanceDiscountPkr,
+  deliveryFeePkr,
+  deliverySummary,
+} from "@/lib/constants";
 import { trackBeginCheckout } from "@/lib/analytics";
 import { trackMeta } from "@/lib/meta-client";
 import { isPakistaniMobile } from "@/lib/phones";
@@ -50,7 +55,9 @@ export function CheckoutForm() {
   }, [lines, cartSubtotal]);
 
   const codFee = deliveryFeePkr(paymentMethod);
-  const total = Math.max(0, cartSubtotal - discount + codFee);
+  const advanceDiscount =
+    paymentMethod === "advance" ? advanceDiscountPkr(cartSubtotal) : 0;
+  const total = Math.max(0, cartSubtotal - discount - advanceDiscount + codFee);
 
   const steps = useMemo(
     () => ["Cart", "Details", "Confirm"],
@@ -249,10 +256,12 @@ export function CheckoutForm() {
                 onChange={() => setPaymentMethod("advance")}
               />
               <span>
-                <span className="font-semibold">Advance payment</span>
+                <span className="font-semibold">
+                  Advance payment ({ADVANCE_DISCOUNT_PERCENT}% off)
+                </span>
                 <span className="mt-1 block text-sm text-muted">
-                  Free nationwide delivery. Payment details are sent by email and
-                  phone after you order.
+                  {ADVANCE_DISCOUNT_PERCENT}% off this order. Delivery is free.
+                  We send payment details after you order.
                 </span>
               </span>
             </label>
@@ -265,13 +274,10 @@ export function CheckoutForm() {
               />
               <span>
                 <span className="font-semibold">
-                  Cash on delivery
-                  {deliveryFeePkr("cod") > 0
-                    ? ` (+ ${formatPkr(deliveryFeePkr("cod"))})`
-                    : " (free delivery)"}
+                  Cash on delivery (free delivery)
                 </span>
                 <span className="mt-1 block text-sm text-muted">
-                  Pay the courier when your order arrives.
+                  No delivery fee. Pay the courier the order total when it arrives.
                 </span>
               </span>
             </label>
@@ -328,9 +334,15 @@ export function CheckoutForm() {
               <dt className="text-muted">Subtotal</dt>
               <dd>{formatPkr(cartSubtotal)}</dd>
             </div>
+            {advanceDiscount > 0 && (
+              <div className="flex justify-between text-accent">
+                <dt>Advance payment ({ADVANCE_DISCOUNT_PERCENT}%)</dt>
+                <dd>−{formatPkr(advanceDiscount)}</dd>
+              </div>
+            )}
             {discount > 0 && (
               <div className="flex justify-between text-accent">
-                <dt>Discount</dt>
+                <dt>Coupon</dt>
                 <dd>−{formatPkr(discount)}</dd>
               </div>
             )}

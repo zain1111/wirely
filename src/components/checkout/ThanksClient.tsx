@@ -72,8 +72,8 @@ export function ThanksClient() {
         Your order number is{" "}
         <strong className="text-foreground">{order}</strong>.
         {advance
-          ? " We will get back to you shortly with payment details before we confirm your order."
-          : " If you need any details about your order, please contact us on WhatsApp."}
+          ? " Your 10% advance discount is included. We will get back to you shortly with payment details before we confirm your order."
+          : " Delivery is free. If you need any details about your order, please contact us on WhatsApp."}
       </p>
       {advance && (
         <p className="mx-auto mt-4 max-w-xl text-sm text-muted">

@@ -11,7 +11,7 @@ import { trackAddToCart, trackBeginCheckout } from "@/lib/analytics";
 import { DevTodo } from "@/components/dev/DevTodo";
 import { CompatibilityList } from "@/components/product/CompatibilityList";
 import { ProductCard } from "@/components/product/ProductCard";
-import { DELIVERY_MODE, RETURN_TERMS, deliverySummary } from "@/lib/constants";
+import { RETURN_TERMS, deliverySummary } from "@/lib/constants";
 import { trackMeta } from "@/lib/meta-client";
 import { resolveUnitPrice } from "@/lib/pricing";
 import {
@@ -41,7 +41,7 @@ function colorSwatch(label: string): string {
 const trustRow = [
   {
     icon: Truck,
-    label: DELIVERY_MODE === "all" ? "Free delivery" : "Free advance delivery",
+    label: "Free delivery",
   },
   { icon: RotateCcw, label: "7-day returns" },
   { icon: MessageCircle, label: "WhatsApp support" },

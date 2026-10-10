@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Menu, ShoppingBag, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { deliveryFeePkr } from "@/lib/constants";
 import { captureAttribution, isAdLanding } from "@/lib/attribution";
 import { useCart } from "@/store/cart";
 import { cn } from "@/lib/utils";
@@ -38,8 +37,6 @@ export function Header() {
   const segment = pathname.split("/").filter(Boolean)[0] || "";
   const isProduct = Boolean(segment) && !RESERVED.has(segment) && !pathname.startsWith("/admin");
   const minimal = adLanding && isProduct;
-  const freeForAll =
-    deliveryFeePkr("advance") === 0 && deliveryFeePkr("cod") === 0;
 
   useEffect(() => {
     const query = search.toString();
@@ -48,7 +45,7 @@ export function Header() {
   }, [pathname, search]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-white">{!minimal && <div className="bg-graphite px-4 py-2 text-center text-[10px] tracking-wide text-white sm:text-xs">{freeForAll ? "Free delivery on every order" : "Free delivery on advance orders"} <span className="mx-3 text-white/40">|</span> Cash on delivery available across Pakistan</div>}
+    <header className="sticky top-0 z-40 border-b border-border bg-white">{!minimal && <div className="bg-graphite px-4 py-2 text-center text-[10px] tracking-wide text-white sm:text-xs">10% off when you pay in advance <span className="mx-3 text-white/40">|</span> Free cash on delivery across Pakistan</div>}
       <div className="container-wirely flex h-16 items-center justify-between gap-4 md:h-18">
         <Link href="/" className="flex items-center gap-2" aria-label="Wirely home">
           <Image

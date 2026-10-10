@@ -20,7 +20,7 @@ export default function ShippingPage() {
         </p>
         <p>
           <strong className="text-foreground">Advance payment:</strong> delivery
-          is free.
+          is free, and the order total is 10% off.
         </p>
         <p>
           <strong className="text-foreground">Cash on delivery:</strong>{" "}
