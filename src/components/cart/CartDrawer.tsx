@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Minus, Plus, X } from "lucide-react";
 import { useCart } from "@/store/cart";
+import { deliverySummary } from "@/lib/constants";
 import { formatPkr, productImageSrc } from "@/lib/utils";
 
 export function CartDrawer() {
@@ -45,7 +46,7 @@ export function CartDrawer() {
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {lines.length === 0 ? (
             <p className="text-sm text-muted">
-              Your cart is empty. Pick a charger, cable, or AirPods to get started.
+              Your cart is empty.
             </p>
           ) : (
             <ul className="space-y-4">
@@ -118,7 +119,7 @@ export function CartDrawer() {
             Checkout
           </Link>
           <p className="mt-2 text-center text-xs text-muted">
-            Free delivery on advance payment · COD + Rs 299
+            {deliverySummary()}
           </p>
         </div>
       </aside>

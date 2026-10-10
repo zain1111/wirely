@@ -105,14 +105,16 @@ export function ReviewSlider({
           />
         </div>
         <div className="px-2 py-2 md:px-4">
-          <p className="flex gap-0.5 text-accent" aria-label={`${review.rating} out of 5 stars`}>
-            {Array.from({ length: 5 }).map((_, star) => (
-              <Star
-                key={star}
-                className={`h-5 w-5 ${star < review.rating ? "fill-current" : "opacity-30"}`}
-              />
-            ))}
-          </p>
+          {review.rating != null && (
+            <p className="flex gap-0.5 text-accent" aria-label={`${review.rating} out of 5 stars`}>
+              {Array.from({ length: 5 }).map((_, star) => (
+                <Star
+                  key={star}
+                  className={`h-5 w-5 ${star < (review.rating ?? 0) ? "fill-current" : "opacity-30"}`}
+                />
+              ))}
+            </p>
+          )}
           <blockquote className="mt-5 font-display text-2xl font-semibold leading-snug text-foreground md:text-3xl">
             “{review.quote}”
           </blockquote>

@@ -11,14 +11,14 @@ export const SEED_PRODUCTS: Product[] = [
     price: 1899,
     compare_at_price: null,
     badge: null,
-    description: "Samsung USB-C charging adapter. Adapter only; the USB-C cable is sold separately. Our charger is compatible with all Samsung devices, especially flagship phones.",
-    meta_title: "Samsung USB-C Charger Pakistan",
-    meta_description: "Samsung USB-C charger at Wirely. Compatible with all Samsung devices, especially flagship phones.",
+    description: "Samsung USB-C charging adapter. Adapter only; the USB-C cable is sold separately.",
+    meta_title: "45W Samsung USB-C Charger Pakistan COD",
+    meta_description: "45W Samsung USB-C charger in Pakistan. Adapter only. Cash on delivery available. Free delivery on advance payment.",
     video_url: null,
     video_thumbnail: null,
-    highlights: ["Adapter only — cable not included", "USB-C charging connection", "Two-pin round plug", "Compatible with all Samsung devices, especially flagship phones"],
+    highlights: ["Adapter only — cable not included", "USB-C charging connection", "Two-pin round plug"],
     images: ["/products/samsung-packaging-catalog-v2.png", "/products/samsung-adapters-gallery.png"],
-    device_compatibility: [{icon: "📱", name: "Samsung Galaxy", models: "Our charger is compatible with all Samsung devices, especially flagship phones."}],
+    device_compatibility: [],
     stock: 60,
     sort_order: 2,
     is_active: true,
@@ -168,6 +168,8 @@ export const SEED_PRODUCTS: Product[] = [
     name: "40W Fast Charger + High-Speed Data Cable",
     short_name: "Charger + Cable Combo",
     price: 5198,
+    // TODO: [FILL IN] Confirm this compare-at price. The 40W adapter and cable
+    // already add up to Rs 5,198, so Rs 6,597 may not be a real separate price.
     compare_at_price: 6597,
     badge: "Bundle Deal",
     description:

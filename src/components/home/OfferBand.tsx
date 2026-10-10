@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Reveal } from "@/components/motion/Reveal";
-import { COD_FEE_PKR } from "@/lib/constants";
+import { deliveryFeePkr } from "@/lib/constants";
 import { formatPkr } from "@/lib/utils";
 
 export function OfferBand() {
@@ -25,9 +25,11 @@ export function OfferBand() {
               Free nationwide delivery when you pay in advance.
             </h2>
             <p className="mt-3 max-w-xl text-white/85">
-              Prefer doorstep cash? Choose COD for {formatPkr(COD_FEE_PKR)}{" "}
-              extra. Either way, we confirm your order on WhatsApp within
-              minutes.
+              Prefer doorstep cash?{" "}
+              {deliveryFeePkr("cod") === 0
+                ? "Cash on delivery is free too."
+                : `Choose COD for ${formatPkr(deliveryFeePkr("cod"))} extra.`}{" "}
+              Either way, we confirm your order on WhatsApp within minutes.
             </p>
             <Link
               href="/shop"

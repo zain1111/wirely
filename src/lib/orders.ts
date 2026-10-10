@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { COD_FEE_PKR } from "@/lib/constants";
+import { deliveryFeePkr } from "@/lib/constants";
+import { isPakistaniMobile } from "@/lib/phones";
 import { computeDiscount, normalizeCouponCode } from "@/lib/coupons";
 import { sendOrderEmails } from "@/lib/email";
 import { mapProductRow } from "@/lib/products";
@@ -18,12 +19,24 @@ const cartItemSchema = z.object({
 
 export const placeOrderSchema = z.object({
   customerName: z.string().min(2).max(100),
-  email: z.string().email(),
-  phone: z.string().min(10).max(20),
+  email: z.union([z.string().email(), z.literal("")]),
+  phone: z.string().refine(isPakistaniMobile, "Enter a Pakistani mobile number."),
   address: z.string().min(5).max(500),
   city: z.string().min(2).max(100),
   paymentMethod: z.enum(["advance", "cod"]),
   couponCode: z.string().optional().nullable(),
+  attribution: z
+    .object({
+      utm_source: z.string().max(200).optional(),
+      utm_medium: z.string().max(200).optional(),
+      utm_campaign: z.string().max(200).optional(),
+      utm_content: z.string().max(200).optional(),
+      utm_term: z.string().max(200).optional(),
+      fbclid: z.string().max(200).optional(),
+      fbp: z.string().max(200).optional(),
+      fbc: z.string().max(200).optional(),
+    })
+    .optional(),
   items: z.array(cartItemSchema).min(1),
   turnstileToken: z.string().optional().nullable(),
 });
@@ -187,28 +200,37 @@ export async function placeOrder(
     couponId = (coupon as Coupon).id;
   }
 
-  const codFee = data.paymentMethod === "cod" ? COD_FEE_PKR : 0;
+  const codFee = deliveryFeePkr(data.paymentMethod);
   const total = Math.max(0, subtotal - discount + codFee);
 
-  const { data: order, error: orderError } = await supabase
+  const orderRow = {
+    customer_name: data.customerName,
+    email: data.email,
+    phone: data.phone,
+    address: data.address,
+    city: data.city,
+    subtotal_before_discount: subtotal,
+    discount_amount: discount,
+    coupon_id: couponId,
+    coupon_code: couponCode,
+    payment_method: data.paymentMethod,
+    cod_fee: codFee,
+    total_price: total,
+    status: "pending" as const,
+  };
+  let { data: order, error: orderError } = await supabase
     .from("orders")
-    .insert({
-      customer_name: data.customerName,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-      city: data.city,
-      subtotal_before_discount: subtotal,
-      discount_amount: discount,
-      coupon_id: couponId,
-      coupon_code: couponCode,
-      payment_method: data.paymentMethod,
-      cod_fee: codFee,
-      total_price: total,
-      status: "pending",
-    })
+    .insert({ ...orderRow, attribution: data.attribution ?? null })
     .select("id, order_number")
     .single();
+
+  if (orderError && /attribution/i.test(orderError.message)) {
+    ({ data: order, error: orderError } = await supabase
+      .from("orders")
+      .insert(orderRow)
+      .select("id, order_number")
+      .single());
+  }
 
   if (orderError || !order) {
     return {

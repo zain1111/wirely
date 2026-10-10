@@ -103,6 +103,16 @@ export default async function AdminOrderDetailPage({ params }: Props) {
               <dt className="text-muted">Payment</dt>
               <dd className="font-medium uppercase">{order.payment_method}</dd>
             </div>
+            {order.attribution && Object.keys(order.attribution).length > 0 && (
+              <div>
+                <dt className="text-muted">Ad click</dt>
+                <dd className="font-medium">
+                  {Object.entries(order.attribution)
+                    .map(([key, value]) => `${key}: ${value}`)
+                    .join(" · ")}
+                </dd>
+              </div>
+            )}
             <div>
               <dt className="text-muted">Placed</dt>
               <dd className="font-medium">

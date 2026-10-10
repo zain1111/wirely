@@ -99,6 +99,7 @@ export type Order = {
   total_price: number;
   status: OrderStatus;
   created_at: string;
+  attribution?: Record<string, string> | null;
   order_items?: OrderItem[];
 };
 

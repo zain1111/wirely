@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { isPakistaniMobile } from "@/lib/phones";
 import { hasServiceRole } from "@/lib/supabase/env";
 import { createServiceClient } from "@/lib/supabase/server";
 
@@ -10,8 +11,15 @@ const schema = z.object({
   reviewerEmail: z.string().email(),
   rating: z.number().int().min(1).max(5),
   body: z.string().min(10).max(2000),
+  phone: z.string().optional(),
+  orderNumber: z.string().max(40).optional(),
   honeypot: z.string().optional(),
-});
+}).refine(
+  (value) =>
+    Boolean(value.orderNumber?.trim()) ||
+    Boolean(value.phone && isPakistaniMobile(value.phone)),
+  { message: "Add a phone number or an order number." },
+);
 
 export async function POST(request: Request) {
   try {
@@ -36,7 +44,15 @@ export async function POST(request: Request) {
       reviewer_name: parsed.data.reviewerName,
       reviewer_email: parsed.data.reviewerEmail,
       rating: parsed.data.rating,
-      body: parsed.data.body,
+      body: [
+        parsed.data.orderNumber?.trim()
+          ? `Order: ${parsed.data.orderNumber.trim()}`
+          : "",
+        parsed.data.phone?.trim() ? `Phone: ${parsed.data.phone.trim()}` : "",
+        parsed.data.body,
+      ]
+        .filter(Boolean)
+        .join("\n"),
       status: "pending",
     });
 

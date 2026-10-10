@@ -1,11 +1,14 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { COD_FEE_PKR } from "@/lib/constants";
-import { trackBeginCheckout, trackPurchase } from "@/lib/analytics";
+import { readAttribution } from "@/lib/attribution";
+import { deliveryFeePkr, deliverySummary } from "@/lib/constants";
+import { trackBeginCheckout } from "@/lib/analytics";
+import { trackMeta } from "@/lib/meta-client";
+import { isPakistaniMobile } from "@/lib/phones";
 import { formatPkr, productImageSrc } from "@/lib/utils";
 import { useCart } from "@/store/cart";
 
@@ -18,23 +21,35 @@ export function CheckoutForm() {
   const [couponError, setCouponError] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
   const cartSubtotal = subtotal();
+  const started = useRef(false);
 
   useEffect(() => {
-    if (lines.length) {
-      trackBeginCheckout(
-        cartSubtotal,
-        lines.map((l) => ({
-          item_id: l.productSlug,
-          item_name: l.productName,
-          price: l.unitPrice,
-          quantity: l.quantity,
-        })),
-      );
-    }
+    if (!lines.length || started.current) return;
+    started.current = true;
+    trackBeginCheckout(
+      cartSubtotal,
+      lines.map((l) => ({
+        item_id: l.productSlug,
+        item_name: l.productName,
+        price: l.unitPrice,
+        quantity: l.quantity,
+      })),
+    );
+    trackMeta(
+      "InitiateCheckout",
+      {
+        content_ids: lines.map((line) => line.productSlug),
+        content_type: "product",
+        value: cartSubtotal,
+        currency: "PKR",
+        num_items: lines.reduce((sum, line) => sum + line.quantity, 0),
+      },
+    );
   }, [lines, cartSubtotal]);
 
-  const codFee = paymentMethod === "cod" ? COD_FEE_PKR : 0;
+  const codFee = deliveryFeePkr(paymentMethod);
   const total = Math.max(0, cartSubtotal - discount + codFee);
 
   const steps = useMemo(
@@ -72,14 +87,23 @@ export function CheckoutForm() {
     setError("");
     const form = new FormData(e.currentTarget);
 
+    const phone = String(form.get("phone") || "");
+    if (!isPakistaniMobile(phone)) {
+      setPhoneError("Enter a Pakistani mobile number, like 03XXXXXXXXX.");
+      setPending(false);
+      return;
+    }
+    setPhoneError("");
+
     const payload = {
       customerName: String(form.get("name") || ""),
-      email: String(form.get("email") || ""),
-      phone: String(form.get("phone") || ""),
+      email: String(form.get("email") || "").trim(),
+      phone,
       address: String(form.get("address") || ""),
       city: String(form.get("city") || ""),
       paymentMethod,
       couponCode: couponCode || couponInput || null,
+      attribution: readAttribution(),
       items: lines.map((l) => ({
         productSlug: l.productSlug,
         variationId: l.variationId,
@@ -100,16 +124,22 @@ export function CheckoutForm() {
         return;
       }
 
-      trackPurchase({
-        transaction_id: String(data.orderNumber),
-        value: data.total,
-        items: lines.map((l) => ({
-          item_id: l.productSlug,
-          item_name: l.productName,
-          price: l.unitPrice,
-          quantity: l.quantity,
-        })),
-      });
+      sessionStorage.setItem(
+        "wirely-pending-purchase",
+        JSON.stringify({
+          orderNumber: String(data.orderNumber),
+          value: data.total,
+          content_ids: lines.map((line) => line.productSlug),
+          contents: lines.map((line) => ({
+            id: line.productSlug,
+            quantity: line.quantity,
+            item_price: line.unitPrice,
+          })),
+          phone,
+          name: String(form.get("name") || ""),
+          city: String(form.get("city") || ""),
+        }),
+      );
 
       clearCart();
       const params = new URLSearchParams({
@@ -159,8 +189,7 @@ export function CheckoutForm() {
         <form onSubmit={onSubmit} className="space-y-4 rounded-[2rem] border border-border bg-card p-6 md:p-8">
           <h1 className="font-display text-3xl font-bold">Checkout</h1>
           <p className="text-sm text-muted">
-            One short form. You&apos;ll get a confirmation email right after
-            placing your order.
+            No account needed. {deliverySummary()}
           </p>
 
           <div className="grid gap-3 md:grid-cols-2">
@@ -177,7 +206,7 @@ export function CheckoutForm() {
               <input
                 name="email"
                 type="email"
-                required
+                placeholder="Optional, for the invoice"
                 className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5"
               />
             </label>
@@ -186,6 +215,7 @@ export function CheckoutForm() {
               <input
                 name="phone"
                 required
+                inputMode="tel"
                 placeholder="03xxxxxxxxx"
                 className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5"
               />
@@ -235,7 +265,10 @@ export function CheckoutForm() {
               />
               <span>
                 <span className="font-semibold">
-                  Cash on delivery (+ {formatPkr(COD_FEE_PKR)})
+                  Cash on delivery
+                  {deliveryFeePkr("cod") > 0
+                    ? ` (+ ${formatPkr(deliveryFeePkr("cod"))})`
+                    : " (free delivery)"}
                 </span>
                 <span className="mt-1 block text-sm text-muted">
                   Pay the courier when your order arrives.
@@ -244,6 +277,7 @@ export function CheckoutForm() {
             </label>
           </fieldset>
 
+          {phoneError && <p className="text-sm text-danger">{phoneError}</p>}
           {error && <p className="text-sm text-danger">{error}</p>}
 
           <button type="submit" className="btn-primary w-full" disabled={pending}>
@@ -301,8 +335,8 @@ export function CheckoutForm() {
               </div>
             )}
             <div className="flex justify-between">
-              <dt className="text-muted">COD fee</dt>
-              <dd>{codFee ? formatPkr(codFee) : "—"}</dd>
+              <dt className="text-muted">Delivery</dt>
+              <dd>{codFee ? formatPkr(codFee) : "Free"}</dd>
             </div>
             <div className="flex justify-between border-t border-border pt-3 text-base font-semibold">
               <dt>Total</dt>

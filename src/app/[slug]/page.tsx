@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ReviewSlider } from "@/components/home/ReviewSlider";
 import { ProductDetail } from "@/components/product/ProductDetail";
-import { reviewsForSlug } from "@/lib/customer-reviews";
+import { ProductReviews } from "@/components/product/ProductReviews";
 import { ReviewForm } from "@/components/product/ReviewForm";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { SITE_NAME, SITE_URL } from "@/lib/constants";
+import { PUBLIC_REVIEW_FORM, SITE_NAME, SITE_URL } from "@/lib/constants";
+import {
+  displayReviewsForProduct,
+  reviewSummary,
+} from "@/lib/customer-reviews";
+import { getProductPage, pageMeta, productFaqs } from "@/lib/product-pages";
 import { getProductBySlug, getProducts } from "@/lib/products";
 import { getApprovedReviews } from "@/lib/reviews";
 import { absoluteUrl, productImageSrc } from "@/lib/utils";
@@ -36,15 +40,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProductBySlug(slug);
   if (!product) return { title: "Product not found" };
 
-  const title =
-    product.meta_title || `${product.name} | ${SITE_NAME} Pakistan`;
+  const tuned = pageMeta(product);
+  const title = tuned?.title || product.meta_title || `${product.name} | ${SITE_NAME} Pakistan`;
   const description =
+    tuned?.description ||
     product.meta_description ||
     product.description.slice(0, 155).replace(/\s+/g, " ");
   const image = absoluteUrl(productImageSrc(product.images[0] || "/brand/logo.png"));
 
   return {
-    title,
+    title: tuned ? { absolute: title } : title,
     description,
     alternates: { canonical: `/${product.slug}` },
     openGraph: {
@@ -72,8 +77,22 @@ export default async function ProductPage({ params }: Props) {
   const reviews = await getApprovedReviews(product.slug);
 
   const all = await getProducts();
+  const page = getProductPage(product.slug);
+  const hidden = new Set(page?.hideRelatedSlugs ?? []);
   const isCharging = /charger|cable/.test(product.slug);
-  const related = all.filter((p) => p.slug !== product.slug && (isCharging ? /charger|cable/.test(p.slug) : p.slug.includes("airpods"))).slice(0, 3);
+  const related = all.filter((p) => p.slug !== product.slug && !hidden.has(p.slug) && (isCharging ? /charger|cable/.test(p.slug) : p.slug.includes("airpods"))).slice(0, 3);
+  const cable = page?.bundle
+    ? all.find((item) => item.slug === page.bundle?.cableSlug)
+    : undefined;
+  const separateBundlePrice =
+    page?.bundle && cable ? product.price + cable.price : null;
+  const shownReviews = displayReviewsForProduct(
+    product.slug,
+    Boolean(page?.adapterOnly),
+    reviews,
+  );
+  const summary = reviewSummary(shownReviews);
+  const faqs = productFaqs(page);
 
   const productLd = {
     "@context": "https://schema.org",
@@ -88,9 +107,31 @@ export default async function ProductPage({ params }: Props) {
       url: `${SITE_URL}/${product.slug}`,
       priceCurrency: "PKR",
       price: product.price,
-      availability: "https://schema.org/InStock",
+      availability:
+        product.stock > 0
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
       seller: { "@type": "Organization", name: SITE_NAME },
     },
+    ...(summary
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: summary.average.toFixed(1),
+            reviewCount: summary.count,
+          },
+        }
+      : {}),
+  };
+
+  const faqLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
   };
 
   const breadcrumbLd = {
@@ -114,33 +155,32 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <>
-      <JsonLd data={[productLd, breadcrumbLd]} />
-      <ProductDetail product={product} related={related} />
-      <ReviewSlider
-        reviews={reviewsForSlug(product.slug)}
-        eyebrow="From customers"
-        title="Photos and messages after delivery"
-        layout="gallery"
+      <JsonLd data={[productLd, breadcrumbLd, faqLd]} />
+      <ProductDetail
+        product={product}
+        related={related}
+        page={page}
+        separateBundlePrice={separateBundlePrice}
       />
-      <div className="container-wirely pb-24 md:pb-16">
-        {reviews.length > 0 && (
-          <section className="mb-8 space-y-3">
-            <h2 className="font-display text-2xl font-semibold">Reviews</h2>
-            {reviews.map((review) => (
-              <article
-                key={review.id}
-                className="rounded-3xl border border-border bg-card p-5"
-              >
-                <p className="font-semibold">
-                  {review.reviewer_name} · {review.rating}/5
-                </p>
-                <p className="mt-2 text-sm text-muted">{review.body}</p>
-              </article>
+      {faqs.length > 0 && (
+        <section className="container-wirely pb-12">
+          <h2 className="font-display text-2xl font-semibold">Questions</h2>
+          <div className="faq-list mt-4">
+            {faqs.map((item) => (
+              <details key={item.q}>
+                <summary>{item.q}</summary>
+                <p>{item.a}</p>
+              </details>
             ))}
-          </section>
-        )}
-        <ReviewForm productSlug={product.slug} />
-      </div>
+          </div>
+        </section>
+      )}
+      <ProductReviews reviews={shownReviews} />
+      {PUBLIC_REVIEW_FORM && (
+        <div className="container-wirely pb-24 md:pb-16">
+          <ReviewForm productSlug={product.slug} />
+        </div>
+      )}
     </>
   );
 }

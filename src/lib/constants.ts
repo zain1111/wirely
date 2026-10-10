@@ -14,7 +14,15 @@ function normalizeSiteUrl(raw: string | undefined): string {
     candidate = `https://${candidate}`;
   }
   try {
-    return new URL(candidate).origin;
+    const url = new URL(candidate);
+    // Preview deploys must not become the canonical or Open Graph host.
+    if (
+      url.hostname.endsWith(".netlify.app") ||
+      url.hostname.endsWith(".netlify.live")
+    ) {
+      return fallback;
+    }
+    return url.origin;
   } catch {
     return fallback;
   }
@@ -26,6 +34,40 @@ export const WHATSAPP_NUMBER =
   process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "923431143434";
 
 export const COD_FEE_PKR = Number(process.env.NEXT_PUBLIC_COD_FEE_PKR || 299);
+
+/** `advance` (default): free on advance payment, COD fee applies. `all`: free on every order. */
+export const DELIVERY_MODE =
+  process.env.NEXT_PUBLIC_DELIVERY_MODE === "all" ? "all" : "advance";
+
+export function deliveryFeePkr(method: "advance" | "cod"): number {
+  if (DELIVERY_MODE === "all") return 0;
+  return method === "cod" ? COD_FEE_PKR : 0;
+}
+
+function rs(amount: number): string {
+  return `Rs ${Math.round(amount).toLocaleString("en-PK")}`;
+}
+
+export function deliverySummary(): string {
+  const advance = deliveryFeePkr("advance");
+  const cod = deliveryFeePkr("cod");
+  if (advance === 0 && cod === 0) return "Free delivery on every order.";
+  if (advance === 0) {
+    return `Free delivery on advance payment. Cash on delivery adds ${rs(cod)}.`;
+  }
+  return `Delivery is ${rs(advance)} on advance payment and ${rs(cod)} on cash on delivery.`;
+}
+
+/** Matches the published returns page. This is not a warranty term. */
+export const RETURN_TERMS =
+  "You can request a return within 7 days of delivery for unused products in their original packaging. Defective items are replaced or refunded after we verify them.";
+
+export const DELIVERY_WINDOW = "2–4 working days";
+
+export const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "";
+
+export const PUBLIC_REVIEW_FORM =
+  process.env.NEXT_PUBLIC_PUBLIC_REVIEW_FORM === "true";
 
 export const ORDER_FROM_EMAIL =
   process.env.ORDER_FROM_EMAIL || "no-reply@wire-ly.shop";
@@ -85,7 +127,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "Is delivery really free?",
-    a: "Yes — advance payment orders include free nationwide delivery. Cash on delivery adds a small Rs 299 handling fee.",
+    a: deliverySummary(),
   },
   {
     q: "Are products original?",
@@ -93,7 +135,10 @@ export const FAQ_ITEMS = [
   },
   {
     q: "Can I pay cash on delivery?",
-    a: "Absolutely. Choose COD at checkout. A Rs 299 fee applies to cover courier cash handling.",
+    a:
+      deliveryFeePkr("cod") === 0
+        ? "Yes. Choose cash on delivery at checkout. Delivery stays free."
+        : `Yes. Choose cash on delivery at checkout. A ${rs(deliveryFeePkr("cod"))} fee applies to cover courier cash handling.`,
   },
   {
     q: "What if I need help after ordering?",

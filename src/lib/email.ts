@@ -475,7 +475,7 @@ export async function sendOrderEmails(
       subject: adminMail.subject,
       html: adminMail.html,
       text: adminMail.text,
-      replyTo: customerEmail,
+      replyTo: customerEmail.includes("@") ? customerEmail : undefined,
     });
     if (!adminResult.ok) {
       console.error(
@@ -483,6 +483,10 @@ export async function sendOrderEmails(
         admin.join(", "),
         adminResult.error,
       );
+    }
+
+    if (!customerEmail.includes("@")) {
+      return { sent: adminResult.ok };
     }
 
     const customerResult = await sendViaResend({

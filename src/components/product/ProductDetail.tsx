@@ -2,17 +2,24 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { MessageCircle, Check, RotateCcw, Truck } from "lucide-react";
 import type { Product } from "@/lib/types";
 import { trackAddToCart, trackBeginCheckout } from "@/lib/analytics";
+import { DevTodo } from "@/components/dev/DevTodo";
+import { CompatibilityList } from "@/components/product/CompatibilityList";
 import { ProductCard } from "@/components/product/ProductCard";
+import { DELIVERY_MODE, RETURN_TERMS, deliverySummary } from "@/lib/constants";
+import { trackMeta } from "@/lib/meta-client";
 import { resolveUnitPrice } from "@/lib/pricing";
+import {
+  stripListedPhrases,
+  type ProductPageConfig,
+} from "@/lib/product-pages";
 import { formatPkr, productImageSrc, whatsappUrl } from "@/lib/utils";
 import { useCart } from "@/store/cart";
-import { COD_FEE_PKR } from "@/lib/constants";
 
 const COLOR_SWATCHES: Record<string, string> = {
   white: "#f4f4f4",
@@ -31,11 +38,11 @@ function colorSwatch(label: string): string {
   return COLOR_SWATCHES[label.trim().toLowerCase()] ?? "#d9dde3";
 }
 
-const SAMSUNG_COMPATIBILITY =
-  "Our charger is compatible with all Samsung devices, especially flagship phones.";
-
 const trustRow = [
-  { icon: Truck, label: "Free advance delivery" },
+  {
+    icon: Truck,
+    label: DELIVERY_MODE === "all" ? "Free delivery" : "Free advance delivery",
+  },
   { icon: RotateCcw, label: "7-day returns" },
   { icon: MessageCircle, label: "WhatsApp support" },
 ];
@@ -43,36 +50,31 @@ const trustRow = [
 export function ProductDetail({
   product,
   related,
+  page = null,
+  separateBundlePrice = null,
 }: {
   product: Product;
   related: Product[];
+  page?: ProductPageConfig | null;
+  separateBundlePrice?: number | null;
 }) {
   const router = useRouter();
   const reduce = useReducedMotion();
   const addItem = useCart((s) => s.addItem);
   const variations = product.variations ?? [];
-  const isSamsungCharger = product.slug === "samsung-usb-c-charger";
-  const description = isSamsungCharger
-    ? product.description
-        .replace(
-          "Ask us to confirm availability and compatibility with your Galaxy model before ordering.",
-          SAMSUNG_COMPATIBILITY,
-        )
-        .replace(
-          "Ask us to confirm support for your exact model.",
-          SAMSUNG_COMPATIBILITY,
-        )
-    : product.description;
-  const highlights = product.highlights.map((item) =>
-    isSamsungCharger && /confirm your phone model/i.test(item)
-      ? SAMSUNG_COMPATIBILITY
-      : item,
-  );
-  const compatibility = (product.device_compatibility ?? []).map((item) =>
-    isSamsungCharger && /confirm support for your exact model/i.test(item.models)
-      ? { ...item, models: `${SAMSUNG_COMPATIBILITY}.` }
-      : item,
-  );
+  const phrases = page?.omitPhrases ?? [];
+  const description = stripListedPhrases(product.description, phrases);
+  const highlights = product.highlights
+    .map((item) => stripListedPhrases(item, phrases))
+    .filter((item) => item.length > 1);
+  const compatibility = page
+    ? []
+    : (product.device_compatibility ?? []).filter(
+        (item) =>
+          !phrases.some((phrase) =>
+            `${item.name} ${item.models}`.toLowerCase().includes(phrase),
+          ),
+      );
   const [variationId, setVariationId] = useState<string | null>(
     variations[0]?.id ?? null,
   );
@@ -81,14 +83,52 @@ export function ProductDetail({
     () => resolveUnitPrice(product, variationId),
     [product, variationId],
   );
-  const image = product.images[activeImage] || product.images[0] || "/brand/logo.png";
+  const slides = useMemo(() => {
+    const images = product.images.map((src) => ({ kind: "image" as const, src }));
+    const video = page?.videoSrc || product.video_url;
+    if (!video) return images;
+    const clip = { kind: "video" as const, src: video };
+    if (!images.length) return [clip];
+    return [images[0], clip, ...images.slice(1)];
+  }, [page?.videoSrc, product.images, product.video_url]);
+  const slide = slides[activeImage] || slides[0];
   const selectedVariation = variations.find(v => v.id === variationId);
   const enquiryOnly = product.purchase_mode === "enquiry";
-  const available = !enquiryOnly && (selectedVariation?.stock ?? product.stock) > 0;
-  const saving =
-    product.compare_at_price && product.compare_at_price > priced.price
-      ? product.compare_at_price - priced.price
+  const stockCount = selectedVariation?.stock ?? product.stock;
+  const stockKnown = Number.isFinite(stockCount);
+  const available = !enquiryOnly && stockKnown && stockCount > 0;
+  const stockText = !stockKnown
+    ? null
+    : enquiryOnly
+      ? "Contact us to confirm availability"
+      : stockCount <= 0
+        ? "Out of stock"
+        : `${stockCount} in stock`;
+  const compareAt =
+    product.compare_at_price != null && product.compare_at_price > priced.price
+      ? product.compare_at_price
       : null;
+  const saving = compareAt != null ? compareAt - priced.price : null;
+  const bundle = page?.bundle;
+  const bundleSaving =
+    bundle?.pricePkr != null &&
+    separateBundlePrice != null &&
+    separateBundlePrice > bundle.pricePkr
+      ? separateBundlePrice - bundle.pricePkr
+      : null;
+
+  const viewed = useRef("");
+  useEffect(() => {
+    if (viewed.current === product.slug) return;
+    viewed.current = product.slug;
+    trackMeta("ViewContent", {
+      content_ids: [product.slug],
+      content_name: product.name,
+      content_type: "product",
+      value: priced.price,
+      currency: "PKR",
+    });
+  }, [product.slug, product.name, priced.price]);
 
   function addToCart(buyNow = false) {
     if (!available) return;
@@ -106,6 +146,13 @@ export function ProductDetail({
       item_name: product.name,
       price: priced.price,
       quantity: 1,
+    });
+    trackMeta("AddToCart", {
+      content_ids: [product.slug],
+      content_name: product.name,
+      content_type: "product",
+      value: priced.price,
+      currency: "PKR",
     });
     if (buyNow) {
       trackBeginCheckout(priced.price, [
@@ -131,21 +178,35 @@ export function ProductDetail({
           <div className="product-stage relative aspect-square overflow-hidden rounded-lg border border-border">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
-                key={image}
+                key={slide ? `${slide.kind}-${slide.src}` : "empty"}
                 initial={reduce ? false : { opacity: 0, scale: 1.02 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={reduce ? undefined : { opacity: 0 }}
                 transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 className="absolute inset-0"
               >
-                <Image
-                  src={productImageSrc(image)}
-                  alt={product.name}
-                  fill
-                  priority
-                  className="object-contain"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                />
+                {slide?.kind === "video" ? (
+                  <video
+                    src={slide.src}
+                    className="h-full w-full object-contain"
+                    muted
+                    loop
+                    playsInline
+                    controls
+                    autoPlay
+                    preload="metadata"
+                  />
+                ) : slide ? (
+                  <Image
+                    src={productImageSrc(slide.src)}
+                    alt={product.name}
+                    fill
+                    priority={activeImage === 0}
+                    quality={75}
+                    className="object-contain"
+                    sizes="(max-width: 1024px) 100vw, 640px"
+                  />
+                ) : null}
               </motion.div>
             </AnimatePresence>
 
@@ -156,28 +217,44 @@ export function ProductDetail({
             )}
           </div>
 
-          {product.images.length > 1 && (
+          {page?.mediaTodos.map((todo) => (
+            <DevTodo key={todo}>{todo}</DevTodo>
+          ))}
+          {page && page.compatibility.length === 0 && (
+            <DevTodo>
+              TODO: [FILL IN] model list + speeds, verified against Samsung specs, in src/lib/product-pages.ts.
+            </DevTodo>
+          )}
+
+          {slides.length > 1 && (
             <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
-              {product.images.map((src, i) => (
+              {slides.map((item, i) => (
                 <button
-                  key={src}
+                  key={`${item.kind}-${item.src}`}
                   type="button"
                   onClick={() => setActiveImage(i)}
                   aria-pressed={activeImage === i}
-                  aria-label={`View image ${i + 1}`}
+                  aria-label={item.kind === "video" ? "Play video" : `View image ${i + 1}`}
                   className={`product-stage relative h-20 w-20 shrink-0 overflow-hidden rounded-md border-2 transition-all duration-200 ${
                     i === activeImage
                       ? "ring-glow border-accent"
                       : "border-transparent opacity-70 hover:opacity-100"
                   }`}
                 >
-                  <Image
-                    src={productImageSrc(src)}
-                    alt=""
-                    fill
-                    className="object-contain"
-                    sizes="80px"
-                  />
+                  {item.kind === "video" ? (
+                    <span className="flex h-full items-center justify-center text-xs font-semibold">
+                      Video
+                    </span>
+                  ) : (
+                    <Image
+                      src={productImageSrc(item.src)}
+                      alt=""
+                      fill
+                      quality={75}
+                      className="object-contain"
+                      sizes="80px"
+                    />
+                  )}
                 </button>
               ))}
             </div>
@@ -199,6 +276,9 @@ export function ProductDetail({
           <h1 className="mt-3 font-display text-3xl font-bold leading-tight md:text-4xl">
             {product.name}
           </h1>
+          {page?.subhead && (
+            <p className="mt-3 text-sm leading-relaxed text-muted">{page.subhead}</p>
+          )}
 
           <div className="mt-5 flex flex-wrap items-baseline gap-3">
             <AnimatePresence mode="popLayout" initial={false}>
@@ -213,14 +293,19 @@ export function ProductDetail({
                 {formatPkr(priced.price)}
               </motion.span>
             </AnimatePresence>
-            {product.compare_at_price ? (
+            {compareAt != null ? (
               <span className="text-lg font-normal text-muted line-through">
-                {formatPkr(product.compare_at_price)}
+                {formatPkr(compareAt)}
               </span>
             ) : null}
           </div>
 
-          <p className="mt-4 flex items-center gap-2 text-xs font-medium"><span className={`h-1.5 w-1.5 rounded-full ${available ? "bg-green-700" : "bg-muted"}`} />{enquiryOnly ? "Contact us to confirm availability" : available ? "Available to order" : "Currently out of stock"}</p>
+          {stockText && (
+            <p className="mt-4 flex items-center gap-2 text-xs font-medium">
+              <span className={`h-1.5 w-1.5 rounded-full ${available ? "bg-green-700" : "bg-muted"}`} />
+              {stockText}
+            </p>
+          )}
           <p className="mt-5 text-sm leading-relaxed text-muted">{description}</p>
 
           {variations.length > 0 && (
@@ -277,7 +362,7 @@ export function ProductDetail({
               className="btn-primary flex-1 justify-center text-base disabled:opacity-40 disabled:cursor-not-allowed"
               onClick={() => addToCart(true)}
             >
-              {enquiryOnly ? "Price pending" : available ? "Buy now" : "Out of stock"}
+              {enquiryOnly ? "Price pending" : available ? "Order now" : "Out of stock"}
             </button>
             <button
               type="button"
@@ -289,7 +374,52 @@ export function ProductDetail({
             </button>
           </div>
 
-          <div className="purchase-note mt-5"><p className="font-semibold">Delivery & payment, made clear.</p><p className="mt-1 text-muted">Usually arrives in 2–4 working days after confirmation. Free delivery with advance payment; cash on delivery adds {formatPkr(COD_FEE_PKR)}.</p><Link href="/shipping" className="mt-2 inline-block underline underline-offset-4">See delivery details</Link><span className="mx-3 text-border">|</span><Link href="/returns" className="underline underline-offset-4">Return policy</Link></div>
+          {bundle && bundle.pricePkr != null && separateBundlePrice != null && (
+            <div className="mt-5 rounded-md border border-accent/40 bg-accent-soft p-4">
+              <p className="font-semibold">{bundle.title}</p>
+              <p className="mt-1 text-sm text-muted">
+                {formatPkr(bundle.pricePkr)}
+                {bundleSaving != null ? ` · Save ${formatPkr(bundleSaving)} versus buying separately` : ""}
+              </p>
+              <DevTodo>
+                TODO: [FILL IN] Create a catalog product for this bundle before adding a buy button. The cable alone is a different price.
+              </DevTodo>
+            </div>
+          )}
+          {bundle && bundle.pricePkr == null && (
+            <DevTodo>
+              TODO: [FILL IN] bundle price for {bundle.title}. Separate parts are currently {separateBundlePrice != null ? formatPkr(separateBundlePrice) : "missing a cable price"}.
+            </DevTodo>
+          )}
+
+          <div className="purchase-note mt-5">
+            <p className="font-semibold">Delivery and returns</p>
+            <p className="mt-1 text-muted">{deliverySummary()}</p>
+            <p className="mt-2 text-muted">{page?.returns || RETURN_TERMS}</p>
+            <Link href="/shipping" className="mt-2 inline-block underline underline-offset-4">See delivery details</Link>
+            <span className="mx-3 text-border">|</span>
+            <Link href="/returns" className="underline underline-offset-4">Return policy</Link>
+          </div>
+          {page && page.box.length > 0 && (
+            <div className="mt-6">
+              <h2 className="text-sm font-semibold">In the box</h2>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">
+                {page.box.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {page && page.specs.length > 0 && (
+            <dl className="mt-6 grid grid-cols-2 gap-3 text-sm">
+              {page.specs.map((spec) => (
+                <div key={spec.label}>
+                  <dt className="text-muted">{spec.label}</dt>
+                  <dd className="font-medium">{spec.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
           <div className="mt-6 flex flex-wrap gap-2">
             {trustRow.map(({ icon: Icon, label }) => (
               <span
@@ -302,7 +432,10 @@ export function ProductDetail({
             ))}
           </div>
 
-          {!isSamsungCharger && (
+          {page?.compatibility && page.compatibility.length > 0 && (
+            <CompatibilityList models={page.compatibility} />
+          )}
+          {!page && (
             <div className="product-details-section"><a className="flex items-center gap-2 text-sm font-semibold" href={whatsappUrl(`Hi Wirely! I have a question about ${product.name}. My phone model is:`)}><MessageCircle size={18} className="text-accent" />Not sure it fits? Ask us before you order.</a><p className="mt-2 text-xs leading-relaxed text-muted">Charging performance depends on your device, adapter and cable. Check the listed connectors and supported models.</p></div>
           )}
           {compatibility.length > 0 && (
@@ -349,19 +482,29 @@ export function ProductDetail({
             <p className="truncate text-xs text-muted">{product.short_name}</p>
             <p className="font-bold text-accent">{formatPkr(priced.price)}</p>
           </div>
-          <button
-            type="button"
-            disabled={!available} className="btn-secondary px-4 py-3 text-sm disabled:opacity-40"
-            onClick={() => addToCart(false)}
+          <a
+            href={whatsappUrl(
+              `Hi Wirely, I want to order ${product.name}${selectedVariation?.label ? ` in ${selectedVariation.label}` : ""}.`,
+            )}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-secondary px-3 py-3 text-sm"
+            onClick={() =>
+              trackMeta("Contact", {
+                content_ids: [product.slug],
+                content_name: product.name,
+                currency: "PKR",
+              })
+            }
           >
-            Add
-          </button>
+            Order on WhatsApp
+          </a>
           <button
             type="button"
             disabled={!available} className="btn-primary px-5 py-3 text-sm disabled:opacity-40"
             onClick={() => addToCart(true)}
           >
-            {enquiryOnly ? "Price pending" : available ? "Buy now" : "Out of stock"}
+            {available ? "Order now" : "Out of stock"}
           </button>
         </div>
       </div>}

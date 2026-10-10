@@ -18,6 +18,8 @@ export function ReviewForm({ productSlug }: { productSlug: string }) {
       reviewerEmail: String(form.get("email") || ""),
       rating: Number(form.get("rating") || 5),
       body: String(form.get("body") || ""),
+      phone: String(form.get("phone") || ""),
+      orderNumber: String(form.get("order") || ""),
       honeypot: String(form.get("company") || ""),
     };
 
@@ -72,6 +74,16 @@ export function ReviewForm({ productSlug }: { productSlug: string }) {
           </option>
         ))}
       </select>
+      <input
+        name="phone"
+        placeholder="Phone (or an order number below)"
+        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+      />
+      <input
+        name="order"
+        placeholder="Order number"
+        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+      />
       <textarea
         name="body"
         required

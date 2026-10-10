@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { COD_FEE_PKR } from "@/lib/constants";
+import { deliveryFeePkr } from "@/lib/constants";
 import { formatPkr } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -23,8 +23,10 @@ export default function ShippingPage() {
           is free.
         </p>
         <p>
-          <strong className="text-foreground">Cash on delivery:</strong> a{" "}
-          {formatPkr(COD_FEE_PKR)} courier handling fee applies.
+          <strong className="text-foreground">Cash on delivery:</strong>{" "}
+          {deliveryFeePkr("cod") === 0
+            ? "there is no extra fee."
+            : `a ${formatPkr(deliveryFeePkr("cod"))} courier handling fee applies.`}
         </p>
         <p>
           After you place an order, our team confirms details and tracking on

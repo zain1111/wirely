@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { COD_FEE_PKR, SITE_NAME, WHATSAPP_NUMBER } from "@/lib/constants";
+import { SITE_NAME, WHATSAPP_NUMBER, deliveryFeePkr } from "@/lib/constants";
 import { formatPkr } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -36,9 +36,11 @@ export default function TermsPage() {
         </p>
         <p>
           <strong className="text-foreground">Cash on delivery:</strong> you pay
-          the courier when the parcel arrives. A {formatPkr(COD_FEE_PKR)}{" "}
-          handling fee is added at checkout. Please keep the exact order total
-          ready.
+          the courier when the parcel arrives.{" "}
+          {deliveryFeePkr("cod") === 0
+            ? "Delivery stays free."
+            : `A ${formatPkr(deliveryFeePkr("cod"))} handling fee is added at checkout.`}{" "}
+          Please keep the exact order total ready.
         </p>
         <h2 className="pt-2 font-display text-2xl font-semibold text-foreground">
           Prices and stock

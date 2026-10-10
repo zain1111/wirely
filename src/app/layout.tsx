@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { AttributionCapture } from "@/components/analytics/AttributionCapture";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { StoreShell } from "@/components/layout/StoreShell";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -63,6 +65,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <GoogleAnalytics />
+        <Suspense fallback={null}>
+          <AttributionCapture />
+        </Suspense>
         <JsonLd data={orgLd} />
         <StoreShell>{children}</StoreShell>
       </body>
