@@ -39,7 +39,7 @@ export function ProductReviews({ reviews }: { reviews: DisplayReview[] }) {
                   fill
                   className="object-contain"
                   sizes="(max-width: 768px) 100vw, 50vw"
-                  quality={75}
+                  quality={90}
                 />
               </div>
             )}

@@ -202,9 +202,9 @@ export function ProductDetail({
                     alt={product.name}
                     fill
                     priority={activeImage === 0}
-                    quality={75}
+                    quality={90}
                     className="object-contain"
-                    sizes="(max-width: 1024px) 100vw, 640px"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
                   />
                 ) : null}
               </motion.div>
