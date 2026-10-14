@@ -188,7 +188,7 @@ export const SEED_PRODUCTS: Product[] = [
     ],
     images: ["/products/40w-cable.jpeg", "/products/40w-charger.jpeg", "/products/usb-c-cable-detail.png"],
     device_compatibility: [
-      { icon: "📱", name: "iPhone", models: "iPhone 15, 15 Pro, 16, 16 Pro, 16e" },
+      { icon: "📱", name: "iPhone", models: "iPhone 11, 12, 13, 14, 15, 16, 17 and 18, including basic, e, Pro, and Pro Max models." },
       { icon: "💻", name: "MacBook", models: "MacBook Air M1/M2/M3" },
       { icon: "📱", name: "iPad", models: "iPad Pro, iPad Air (USB-C)" },
       { icon: "🎧", name: "AirPods", models: "AirPods Pro 2, AirPods 4 (USB-C)" },

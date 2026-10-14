@@ -5,6 +5,11 @@ import { createPublicClient } from "@/lib/supabase/public";
 
 export { displayPrice, resolveUnitPrice } from "@/lib/pricing";
 
+/** Chargers, adapters, and cables. Matches slugs that do not contain the word "charger". */
+export function isChargingProduct(slug: string): boolean {
+  return /charger|cable|adapter|adopter|charging/.test(slug);
+}
+
 export function mapProductRow(
   row: Record<string, unknown>,
   variations: ProductVariation[] = [],

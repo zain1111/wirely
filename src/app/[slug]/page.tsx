@@ -10,7 +10,7 @@ import {
   reviewSummary,
 } from "@/lib/customer-reviews";
 import { getProductPage, pageMeta, productFaqs } from "@/lib/product-pages";
-import { getProductBySlug, getProducts } from "@/lib/products";
+import { getProductBySlug, getProducts, isChargingProduct } from "@/lib/products";
 import { getApprovedReviews } from "@/lib/reviews";
 import { absoluteUrl, productImageSrc } from "@/lib/utils";
 
@@ -79,8 +79,8 @@ export default async function ProductPage({ params }: Props) {
   const all = await getProducts();
   const page = getProductPage(product.slug);
   const hidden = new Set(page?.hideRelatedSlugs ?? []);
-  const isCharging = /charger|cable/.test(product.slug);
-  const related = all.filter((p) => p.slug !== product.slug && !hidden.has(p.slug) && (isCharging ? /charger|cable/.test(p.slug) : p.slug.includes("airpods"))).slice(0, 3);
+  const isCharging = isChargingProduct(product.slug);
+  const related = all.filter((p) => p.slug !== product.slug && !hidden.has(p.slug) && (isCharging ? isChargingProduct(p.slug) : p.slug.includes("airpods"))).slice(0, 3);
   const cable = page?.bundle
     ? all.find((item) => item.slug === page.bundle?.cableSlug)
     : undefined;

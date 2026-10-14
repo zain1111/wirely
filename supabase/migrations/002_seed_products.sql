@@ -130,7 +130,7 @@ values
     null,
     '["Complete charging solution in one box","40W adapter + 60W USB-C cable","Fast charge iPhone 15/16 to 50% in ~30 mins","Perfect for MacBook Air fast charging","Ideal gift set or upgrade kit"]'::jsonb,
     '["/products/40w-cable.jpeg","/products/40w-charger.jpeg","/products/usb-c-cable-detail.png"]'::jsonb,
-    '[{"icon":"📱","name":"iPhone","models":"iPhone 15, 15 Pro, 16, 16 Pro, 16e"},{"icon":"💻","name":"MacBook","models":"MacBook Air M1/M2/M3"},{"icon":"📱","name":"iPad","models":"iPad Pro, iPad Air (USB-C)"},{"icon":"🎧","name":"AirPods","models":"AirPods Pro 2, AirPods 4 (USB-C)"}]'::jsonb,
+    '[{"icon":"📱","name":"iPhone","models":"iPhone 11, 12, 13, 14, 15, 16, 17 and 18, including basic, e, Pro, and Pro Max models."},{"icon":"💻","name":"MacBook","models":"MacBook Air M1/M2/M3"},{"icon":"📱","name":"iPad","models":"iPad Pro, iPad Air (USB-C)"},{"icon":"🎧","name":"AirPods","models":"AirPods Pro 2, AirPods 4 (USB-C)"}]'::jsonb,
     30,
     5,
     true

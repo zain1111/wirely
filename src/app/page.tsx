@@ -4,13 +4,13 @@ import { ArrowRight, Cable, MessageCircle, RotateCcw, Truck, Wallet } from "luci
 import { ReviewSlider } from "@/components/home/ReviewSlider";
 import { ProductCard } from "@/components/product/ProductCard";
 import { CUSTOMER_REVIEWS } from "@/lib/customer-reviews";
-import { getProducts } from "@/lib/products";
+import { getProducts, isChargingProduct } from "@/lib/products";
 import { whatsappUrl, formatPkr } from "@/lib/utils";
 import { deliveryFeePkr, deliverySummary } from "@/lib/constants";
 export const revalidate = 300;
 export default async function HomePage() {
     const products = await getProducts();
-    const charging = products.filter(p => /charger|cable/.test(p.slug));
+    const charging = products.filter(p => isChargingProduct(p.slug));
     return <>
     <section className="store-hero container-wirely">
       <div className="hero-copy">
