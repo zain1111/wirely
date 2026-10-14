@@ -34,8 +34,11 @@ const COLOR_SWATCHES: Record<string, string> = {
   red: "#c2413a",
 };
 
-function colorSwatch(label: string): string {
-  return COLOR_SWATCHES[label.trim().toLowerCase()] ?? "#d9dde3";
+function colorSwatch(label: string): string | null {
+  const key = label.trim().toLowerCase();
+  if (COLOR_SWATCHES[key]) return COLOR_SWATCHES[key];
+  const first = key.split(/[\s/-]+/)[0];
+  return COLOR_SWATCHES[first] ?? null;
 }
 
 const trustRow = [
@@ -328,7 +331,7 @@ export function ProductDetail({
           {variations.length > 0 && (
             <div className="mt-7">
               <p className="mb-3 text-sm font-semibold">
-                Color:{" "}
+                {variations.every((item) => colorSwatch(item.label)) ? "Color" : "Option"}:{" "}
                 <span className="font-normal text-muted">
                   {selectedVariation?.label}
                   {selectedVariation ? ` · ${formatPkr(selectedVariation.price)}` : ""}
@@ -347,11 +350,13 @@ export function ProductDetail({
                         : "border-border hover:border-accent/50"
                     }`}
                   >
-                    <span
-                      className="h-4 w-4 rounded-full border border-black/10"
-                      style={{ background: colorSwatch(v.label) }}
-                      aria-hidden
-                    />
+                    {colorSwatch(v.label) && (
+                      <span
+                        className="h-4 w-4 rounded-full border border-black/10"
+                        style={{ background: colorSwatch(v.label) ?? undefined }}
+                        aria-hidden
+                      />
+                    )}
                     {v.label}
                     {v.stock <= 0 ? " · Out of stock" : ""}
                   </button>
