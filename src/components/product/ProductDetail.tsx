@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { MessageCircle, Check, RotateCcw, Truck } from "lucide-react";
+import { MessageCircle, Check, RotateCcw, Star, Truck } from "lucide-react";
 import type { Product } from "@/lib/types";
 import { trackAddToCart, trackBeginCheckout } from "@/lib/analytics";
 import { DevTodo } from "@/components/dev/DevTodo";
@@ -276,6 +276,23 @@ export function ProductDetail({
           <h1 className="mt-3 font-display text-3xl font-bold leading-tight md:text-4xl">
             {product.name}
           </h1>
+          <p className="mt-3 flex items-center gap-2 text-sm" aria-label="Rated 4.9 out of 5 stars">
+            <span className="flex text-accent" aria-hidden>
+              {Array.from({ length: 5 }, (_, index) => (
+                <span key={index} className="relative inline-flex">
+                  <Star className="h-4 w-4 text-border" />
+                  <span
+                    className="absolute inset-0 overflow-hidden text-accent"
+                    style={{ width: index < 4 ? "100%" : "90%" }}
+                  >
+                    <Star className="h-4 w-4 fill-current" />
+                  </span>
+                </span>
+              ))}
+            </span>
+            <span className="font-semibold">4.9</span>
+            <span className="text-muted">out of 5</span>
+          </p>
           {page?.subhead && (
             <p className="mt-3 text-sm leading-relaxed text-muted">{page.subhead}</p>
           )}
