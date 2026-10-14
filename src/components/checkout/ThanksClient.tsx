@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { trackPurchase } from "@/lib/analytics";
 import { trackMeta } from "@/lib/meta-client";
+import { AdvanceBankDetails } from "@/components/checkout/AdvanceBankDetails";
 import { formatPublicOrderNumber, whatsappUrl } from "@/lib/utils";
 
 export function ThanksClient() {
@@ -72,19 +73,21 @@ export function ThanksClient() {
         Your order number is{" "}
         <strong className="text-foreground">{order}</strong>.
         {advance
-          ? " Your 10% advance discount is included. We will get back to you shortly with payment details before we confirm your order."
+          ? " Your 10% advance discount is included."
           : " Delivery is free. If you need any details about your order, please contact us on WhatsApp."}
       </p>
       {advance && (
-        <p className="mx-auto mt-4 max-w-xl text-sm text-muted">
-          If you need any details about your order, please contact us on
-          WhatsApp.
-        </p>
+        <AdvanceBankDetails
+          orderId={order}
+          className="mx-auto mt-6 max-w-xl border border-border"
+        />
       )}
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <a
           href={whatsappUrl(
-            `Hi Wirely, I need details about my order ${order}.`,
+            advance
+              ? `Hi Wirely, I paid for order ${order}. I am sending the payment screenshot.`
+              : `Hi Wirely, I need details about my order ${order}.`,
           )}
           target="_blank"
           rel="noopener noreferrer"

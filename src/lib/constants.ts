@@ -38,6 +38,12 @@ export const COD_FEE_PKR = 0;
 /** Pay-in-advance orders take this percent off the product subtotal. */
 export const ADVANCE_DISCOUNT_PERCENT = 10;
 
+export const ADVANCE_BANK = {
+  bank: "Allied Bank",
+  title: "Zain Azeem",
+  accountNumber: "58120010050851340014",
+} as const;
+
 export function deliveryFeePkr(_method: "advance" | "cod"): number {
   return 0;
 }

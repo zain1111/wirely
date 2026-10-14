@@ -1,4 +1,5 @@
 import {
+  ADVANCE_BANK,
   ORDER_ADMIN_EMAIL,
   ORDER_FROM_EMAIL,
   SITE_NAME,
@@ -163,7 +164,11 @@ export function buildCustomerOrderEmail(order: OrderEmailPayload): {
     order.paymentMethod === "cod"
       ? "<li style=\"margin-bottom:8px;\"><strong>Cash on delivery:</strong> Keep the order total ready. You pay the courier when the parcel arrives.</li>" +
         "<li style=\"margin-bottom:0;\"><strong>Delivery:</strong> Most orders arrive in 2&ndash;4 working days after we confirm your address.</li>"
-      : "<li style=\"margin-bottom:8px;\"><strong>Advance payment:</strong> We will get back to you shortly with payment details before we confirm your order.</li>" +
+      : "<li style=\"margin-bottom:8px;\"><strong>Advance payment:</strong> Send the order total to this account, then send a screenshot of the payment along with order ID " +
+        `${escapeHtml(String(order.orderNumber))} on WhatsApp so we can confirm and dispatch your order.` +
+        `<br />Bank: ${escapeHtml(ADVANCE_BANK.bank)}` +
+        `<br />Title: ${escapeHtml(ADVANCE_BANK.title)}` +
+        `<br />Account number: ${escapeHtml(ADVANCE_BANK.accountNumber)}</li>` +
         "<li style=\"margin-bottom:0;\"><strong>Delivery:</strong> We dispatch after payment is received. Most orders then arrive in 2&ndash;4 working days.</li>";
 
   const html =
@@ -275,7 +280,12 @@ export function buildCustomerOrderEmail(order: OrderEmailPayload): {
     "WHAT HAPPENS NEXT",
     order.paymentMethod === "cod"
       ? "- Cash on delivery. Pay the courier the order total when it arrives."
-      : "- Advance payment. We will contact you with payment details before we confirm your order.",
+      : [
+          `- Advance payment. Send the order total to ${ADVANCE_BANK.bank}.`,
+          `  Title: ${ADVANCE_BANK.title}`,
+          `  Account number: ${ADVANCE_BANK.accountNumber}`,
+          `- Send a screenshot of the payment along with order ID ${order.orderNumber} on WhatsApp so we can confirm and dispatch your order.`,
+        ].join("\n"),
     "- A customer representative may contact you to confirm details and delivery.",
     `- Or message us on WhatsApp: ${waDisplay} (include the phone number you used on this order so we can match it).`,
     "",

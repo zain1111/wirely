@@ -16,6 +16,7 @@ import { trackMeta } from "@/lib/meta-client";
 import { isPakistaniMobile } from "@/lib/phones";
 import { formatPkr, productImageSrc } from "@/lib/utils";
 import { useCart } from "@/store/cart";
+import { AdvanceBankDetails } from "@/components/checkout/AdvanceBankDetails";
 
 export function CheckoutForm() {
   const router = useRouter();
@@ -255,14 +256,14 @@ export function CheckoutForm() {
                 checked={paymentMethod === "advance"}
                 onChange={() => setPaymentMethod("advance")}
               />
-              <span>
+              <span className="min-w-0 flex-1">
                 <span className="font-semibold">
                   Advance payment ({ADVANCE_DISCOUNT_PERCENT}% off)
                 </span>
                 <span className="mt-1 block text-sm text-muted">
                   {ADVANCE_DISCOUNT_PERCENT}% off this order. Delivery is free.
-                  We send payment details after you order.
                 </span>
+                {paymentMethod === "advance" && <AdvanceBankDetails />}
               </span>
             </label>
             <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border p-4">

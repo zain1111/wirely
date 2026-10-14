@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SITE_NAME, WHATSAPP_NUMBER, deliveryFeePkr } from "@/lib/constants";
+import {
+  ADVANCE_BANK,
+  SITE_NAME,
+  WHATSAPP_NUMBER,
+  deliveryFeePkr,
+} from "@/lib/constants";
 import { formatPkr } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -30,9 +35,12 @@ export default function TermsPage() {
           we will not charge you for that item.
         </p>
         <p>
-          <strong className="text-foreground">Advance payment:</strong> we will
-          contact you with payment details. The order is confirmed only after
-          we receive payment.
+          <strong className="text-foreground">Advance payment:</strong> send
+          the order total to {ADVANCE_BANK.bank}, account title{" "}
+          {ADVANCE_BANK.title}, account number {ADVANCE_BANK.accountNumber}.
+          Send a screenshot of the payment along with your order ID on
+          WhatsApp. We confirm and dispatch the order after we receive the
+          payment.
         </p>
         <p>
           <strong className="text-foreground">Cash on delivery:</strong> you pay
